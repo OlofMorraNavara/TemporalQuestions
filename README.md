@@ -46,6 +46,8 @@ Note that A is still the start activity, layout of Mermaid does not help... See 
 and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
 
 ## How to handle crossing 'loops'?
+This is probably the most complex case, as it there are multiple transitions going 'backward'.
+
 ```mermaid
 flowchart LR
     A ----> B
@@ -58,5 +60,5 @@ flowchart LR
     E -.else.-x B
 ```
 
-Note that A is still the start activity, layout of Mermaid does not help... See [our solution](./overlapping-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
+See [our solution](./crossing-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
 and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
