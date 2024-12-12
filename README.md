@@ -42,7 +42,7 @@ graph LR
     D -.else.-x A
 ```
 
-Note that A is still the start activity, layout of Mermaid does not help... See [our solution](./overlapping-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
+See [our solution](./overlapping-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
 and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
 
 ## How to handle crossing 'loops'?
