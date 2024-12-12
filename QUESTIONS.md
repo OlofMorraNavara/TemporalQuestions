@@ -17,10 +17,46 @@ Feel free to create a PR if you have a better solution.
 ```mermaid
 flowchart LR
     A ----> B
-    C
     B -.if C1 is true.-> A
     B -.else.-x C
 ```
 
 See [our solution](./loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
  and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
+
+## How to handle overlapping 'loops'?
+```mermaid
+graph LR
+    A
+    A ----> B
+    subgraph childWorkflow
+        direction LR
+        B
+        D
+        B ----> C
+        C -.if C1 is true.-> D
+        C -.else.-x B
+    end
+    
+    D -.if C2 is true.-> E
+    D -.else.-x A
+```
+
+Note that A is still the start activity, layout of Mermaid does not help... See [our solution](./overlapping-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
+and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
+
+## How to handle crossing 'loops'?
+```mermaid
+flowchart LR
+    A ----> B
+    B ----> C
+    C -.if C1 is true.-> D
+    D -.if C2 is true.-> G
+    D -.else.-x A
+    C -.else.-x E
+    E -.if C3 is true.-> F
+    E -.else.-x B
+```
+
+Note that A is still the start activity, layout of Mermaid does not help... See [our solution](./overlapping-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
+and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).

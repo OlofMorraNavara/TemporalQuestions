@@ -7,6 +7,10 @@ const { A, B, C } = proxyActivities<typeof activities>({
   startToCloseTimeout: '1 minute',
 });
 
+function c1(ctx: WorkflowContext) {
+  return ctx.name === 'AB';
+}
+
 export async function loopingWorkflow(input: WorkflowInput): Promise<WorkflowOutput> {
   log.info('Running Workflow with input', { input });
   let ctx: WorkflowContext = {
@@ -19,7 +23,7 @@ export async function loopingWorkflow(input: WorkflowInput): Promise<WorkflowOut
   ctx = await B(ctx);
   await sleep(1000);
 
-  if (ctx.name === 'AB') {
+  if (c1(ctx)) {
     await continueAsNew<typeof loopingWorkflow>(ctx);
   } else {
     ctx = await C(ctx);
