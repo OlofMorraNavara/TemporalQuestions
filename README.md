@@ -58,5 +58,7 @@ flowchart LR
     E -.if C3 is false.-x B
 ```
 
-See [our solution](./crossing-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
+See our [our solution](./crossing-loops-solution-while) (prev. we had [a different solution](./crossing-loops-solution) as solution, but easier with a while loop) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
 and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
+
+We prefer to name the two functions (entry point for activity) where a loop returns to as goto{ActivityName} to express that it behaves like a goto statement known in programming.
