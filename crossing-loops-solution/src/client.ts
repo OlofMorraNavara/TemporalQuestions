@@ -8,7 +8,8 @@ async function run() {
     taskQueue: 'continue-as-new',
     workflowId: 'loop-0',
     args: [
-      {name: ''}
+      {name: '1'} // End in node F
+      // {name: '2'} // End in node G
     ]
   });
 

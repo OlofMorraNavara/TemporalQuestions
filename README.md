@@ -50,13 +50,12 @@ This is probably the most complex case, as it there are multiple transitions goi
 ```mermaid
 flowchart LR
     A ----> B
-    B ----> C
-    C -.if C1 is true.-> D
-    D -.if C2 is true.-> G
-    D -.else.-x A
-    C -.else.-x E
-    E -.if C3 is true.-> F
-    E -.else.-x B
+    B -.if C1 is true.-> D
+    D -.if C2 is true.-> F
+    D -.if C2 is false.-x A
+    B -.if C1 is false.-x E
+    E -.if C3 is true.-> G
+    E -.if C3 is false.-x B
 ```
 
 See [our solution](./crossing-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
