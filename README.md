@@ -21,7 +21,7 @@ flowchart LR
     B -.else.-x C
 ```
 
-See [our solution](./loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
+See our [our solution](./loops-solution-while) (prev. we had [a different solution](./loops-solution) as solution, but easier with a while loop) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
  and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
 
 ## How to handle overlapping 'loops'?
@@ -41,7 +41,7 @@ graph LR
     D -.else.-x A
 ```
 
-See [our solution](./overlapping-loops-solution) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
+See our [our solution](./overlapping-loops-solution-while) (prev. we had [a different solution](./overlapping-loops-solution) as solution, but easier with a while loop) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)
 and [example](https://github.com/temporalio/samples-typescript/tree/main/continue-as-new).
 
 ## How to handle crossing 'loops'?
