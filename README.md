@@ -32,12 +32,11 @@ graph LR
     subgraph childWorkflow
         direction LR
         B
-        D
         B ----> C
-        C -.if C1 is true.-> D
-        C -.else.-x B
+        C -.if C1 is true.-x B
     end
-    
+    D
+    C -.else.-> D
     D -.if C2 is true.-> E
     D -.else.-x A
 ```
