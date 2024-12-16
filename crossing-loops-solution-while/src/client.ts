@@ -1,15 +1,15 @@
 import { Client } from '@temporalio/client';
-import { workflow, workflowA } from './workflows';
+import { workflowOption2 } from './workflows';
 
 async function run() {
   const client = new Client();
 
-  const result = await client.workflow.execute(workflow, {
+  const result = await client.workflow.execute(workflowOption2, {
     taskQueue: 'continue-as-new',
     workflowId: 'loop-0',
     args: [
-      // {name: '1'} // End in node F
-      {name: '2'} // End in node G
+      {name: '1'} // End in node F
+      // {name: '2'} // End in node G
     ]
   });
 
