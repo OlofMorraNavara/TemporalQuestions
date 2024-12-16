@@ -100,7 +100,7 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
         ...input
     }
 
-    let nextEvent: 'A' | 'B' | 'C' | 'D' | 'F' | 'G' = 'A';
+    let nextEvent: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' = 'A';
 
     while (true) {
         switch (nextEvent) {
@@ -127,15 +127,15 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
             case 'D':
                 ctx = await D(ctx);
                 if (c3(ctx)) {
-                    nextEvent = 'G';
+                    nextEvent = 'E';
                 } else {
                     nextEvent = 'B';
                 }
                 break;
-            case 'F':
+            case 'E':
                 ctx = await E(ctx);
                 return ctx;
-            case 'G':
+            case 'F':
                 ctx = await F(ctx);
                 return ctx;
             default:
