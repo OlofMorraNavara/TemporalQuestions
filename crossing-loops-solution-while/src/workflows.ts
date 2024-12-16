@@ -3,7 +3,7 @@ import { log, proxyActivities } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from './types/context';
 import type * as activities from './activities';
 
-const {A, B, D, E, F, G} = proxyActivities<typeof activities>({
+const {A, B, C, E, F, G} = proxyActivities<typeof activities>({
     startToCloseTimeout: '1 minute',
 });
 
@@ -32,7 +32,7 @@ export async function workflowOption1(input: WorkflowInput): Promise<WorkflowOut
         if (c1(ctx)) {
             let shouldBreak2 = false;
             do {
-                ctx = await D(ctx);
+                ctx = await C(ctx);
                 if (c2(ctx)) {
                     ctx = await F(ctx);
                     shouldBreak = true;
@@ -83,7 +83,7 @@ export async function workflowOption2(input: WorkflowInput): Promise<WorkflowOut
         } while (loop2); // c3
 
         if (c1(ctx)) {
-            ctx = await D(ctx);
+            ctx = await C(ctx);
             loop1 = !c2(ctx);
 
             if(!loop1) {
@@ -100,7 +100,7 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
         ...input
     }
 
-    let nextEvent: 'A' | 'B' | 'D' | 'E' | 'F' | 'G' = 'A';
+    let nextEvent: 'A' | 'B' | 'C' | 'E' | 'F' | 'G' = 'A';
 
     while (true) {
         switch (nextEvent) {
@@ -111,13 +111,13 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
             case 'B':
                 ctx = await B(ctx);
                 if (c1(ctx)) {
-                    nextEvent = 'D';
+                    nextEvent = 'C';
                 } else {
                     nextEvent = 'E';
                 }
                 break;
-            case 'D':
-                ctx = await D(ctx);
+            case 'C':
+                ctx = await C(ctx);
                 if (c2(ctx)) {
                     nextEvent = 'F';
                 } else {
@@ -175,7 +175,7 @@ async function gotoB(input: WorkflowContext): Promise<WorkflowContext> {
     ctx = await B(ctx);
 
     if (c1(ctx)) {
-        ctx = await D(ctx);
+        ctx = await C(ctx);
 
         if (c2(ctx)) {
             ctx = await F(ctx);
