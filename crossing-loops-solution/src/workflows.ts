@@ -3,20 +3,20 @@ import { continueAsNew, sleep, log, proxyActivities, executeChild } from '@tempo
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from './types/context';
 import type * as activities from './activities';
 
-const {A, B, C, E, F, G} = proxyActivities<typeof activities>({
+const {A, B, C, D, F, G} = proxyActivities<typeof activities>({
     startToCloseTimeout: '1 minute',
 });
 
 function c1(ctx: WorkflowContext) {
-    return ctx.name === '1AB' || ctx.name === '2AB' || ctx.name === '1ABDABEB';
+    return ctx.name === '1AB' || ctx.name === '2AB' || ctx.name === '1ABCABDB';
 }
 
 function c2(ctx: WorkflowContext) {
-    return ctx.name === '1ABDABEBD';
+    return ctx.name === '1ABCABDBC';
 }
 
 function c3(ctx: WorkflowContext) {
-    return ctx.name === '2ABDABEBE';
+    return ctx.name === '2ABCABDBD';
 }
 
 export async function loopingWorkflow(input: WorkflowInput): Promise<WorkflowOutput> {
@@ -42,7 +42,7 @@ export async function childWorkflowWithStartB(input: WorkflowContext): Promise<W
     if (c1(ctx)) {
         ctx = await executeChild(childWorkflowWithStartD, {args: [ctx]});
     } else {
-        ctx = await E(ctx);
+        ctx = await D(ctx);
         if (c3(ctx)) {
             ctx = await G(ctx);
         } else {

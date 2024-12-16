@@ -53,9 +53,9 @@ flowchart LR
     B -.if C1 is true.-> C
     C -.if C2 is true.-> F
     C -.if C2 is false.-x A
-    B -.if C1 is false.-x E
-    E -.if C3 is true.-> G
-    E -.if C3 is false.-x B
+    B -.if C1 is false.-x D
+    D -.if C3 is true.-> G
+    D -.if C3 is false.-x B
 ```
 
 See our [our solution](./crossing-loops-solution-while) (prev. we had [a different solution](./crossing-loops-solution) as solution, but easier with a while loop) based on the [continueAsNew API](https://docs.temporal.io/dev-guide/typescript/features#continue-as-new)

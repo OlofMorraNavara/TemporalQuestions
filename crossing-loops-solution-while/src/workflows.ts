@@ -3,20 +3,20 @@ import { log, proxyActivities } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from './types/context';
 import type * as activities from './activities';
 
-const {A, B, C, E, F, G} = proxyActivities<typeof activities>({
+const {A, B, C, D, F, G} = proxyActivities<typeof activities>({
     startToCloseTimeout: '1 minute',
 });
 
 function c1(ctx: WorkflowContext) {
-    return ctx.name === '1AB' || ctx.name === '2AB' || ctx.name === '1ABDABEB';
+    return ctx.name === '1AB' || ctx.name === '2AB' || ctx.name === '1ABCABDB';
 }
 
 function c2(ctx: WorkflowContext) {
-    return ctx.name === '1ABDABEBD';
+    return ctx.name === '1ABCABDBC';
 }
 
 function c3(ctx: WorkflowContext) {
-    return ctx.name === '2ABDABEBE';
+    return ctx.name === '2ABCABDBD';
 }
 
 export async function workflowOption1(input: WorkflowInput): Promise<WorkflowOutput> {
@@ -44,7 +44,7 @@ export async function workflowOption1(input: WorkflowInput): Promise<WorkflowOut
         }
 
         else {
-            ctx = await E(ctx);
+            ctx = await D(ctx);
             if (c3(ctx)) {
                 ctx = await G(ctx);
                 shouldBreak = true;
@@ -73,7 +73,7 @@ export async function workflowOption2(input: WorkflowInput): Promise<WorkflowOut
             loop2 = false;
             ctx = await B(ctx);
             if (!c1(ctx)) {
-                ctx = await E(ctx);
+                ctx = await D(ctx);
                 loop2 = !c3(ctx);
 
                 if (!loop2) {
@@ -100,7 +100,7 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
         ...input
     }
 
-    let nextEvent: 'A' | 'B' | 'C' | 'E' | 'F' | 'G' = 'A';
+    let nextEvent: 'A' | 'B' | 'C' | 'D' | 'F' | 'G' = 'A';
 
     while (true) {
         switch (nextEvent) {
@@ -113,7 +113,7 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
                 if (c1(ctx)) {
                     nextEvent = 'C';
                 } else {
-                    nextEvent = 'E';
+                    nextEvent = 'D';
                 }
                 break;
             case 'C':
@@ -124,8 +124,8 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
                     nextEvent = 'A';
                 }
                 break;
-            case 'E':
-                ctx = await E(ctx);
+            case 'D':
+                ctx = await D(ctx);
                 if (c3(ctx)) {
                     nextEvent = 'G';
                 } else {
@@ -183,7 +183,7 @@ async function gotoB(input: WorkflowContext): Promise<WorkflowContext> {
             return await gotoA(ctx);
         }
     } else {
-        ctx = await E(ctx);
+        ctx = await D(ctx);
 
         if (c3(ctx)) {
             ctx = await G(ctx);
