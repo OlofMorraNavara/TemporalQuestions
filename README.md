@@ -51,10 +51,10 @@ This is probably the most complex case, as it there are multiple transitions goi
 flowchart LR
     A ----> B
     B -.if C1 is true.-> C
-    C -.if C2 is true.-> F
+    C -.if C2 is true.-> E
     C -.if C2 is false.-x A
     B -.if C1 is false.-x D
-    D -.if C3 is true.-> G
+    D -.if C3 is true.-> F
     D -.if C3 is false.-x B
 ```
 

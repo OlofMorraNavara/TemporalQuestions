@@ -3,7 +3,7 @@ import { log, proxyActivities } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from './types/context';
 import type * as activities from './activities';
 
-const {A, B, C, D, F, G} = proxyActivities<typeof activities>({
+const {A, B, C, D, E, F} = proxyActivities<typeof activities>({
     startToCloseTimeout: '1 minute',
 });
 
@@ -34,7 +34,7 @@ export async function workflowOption1(input: WorkflowInput): Promise<WorkflowOut
             do {
                 ctx = await C(ctx);
                 if (c2(ctx)) {
-                    ctx = await F(ctx);
+                    ctx = await E(ctx);
                     shouldBreak = true;
                     shouldBreak2 = true;
                 } else {
@@ -46,7 +46,7 @@ export async function workflowOption1(input: WorkflowInput): Promise<WorkflowOut
         else {
             ctx = await D(ctx);
             if (c3(ctx)) {
-                ctx = await G(ctx);
+                ctx = await F(ctx);
                 shouldBreak = true;
             } else {
 
@@ -77,7 +77,7 @@ export async function workflowOption2(input: WorkflowInput): Promise<WorkflowOut
                 loop2 = !c3(ctx);
 
                 if (!loop2) {
-                    ctx = await G(ctx);
+                    ctx = await F(ctx);
                 }
             }
         } while (loop2); // c3
@@ -87,7 +87,7 @@ export async function workflowOption2(input: WorkflowInput): Promise<WorkflowOut
             loop1 = !c2(ctx);
 
             if(!loop1) {
-                ctx = await F(ctx);
+                ctx = await E(ctx);
             }
         }
     } while (loop1); // c2
@@ -133,10 +133,10 @@ export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOut
                 }
                 break;
             case 'F':
-                ctx = await F(ctx);
+                ctx = await E(ctx);
                 return ctx;
             case 'G':
-                ctx = await G(ctx);
+                ctx = await F(ctx);
                 return ctx;
             default:
                 throw new Error('Unknown activity');
@@ -178,7 +178,7 @@ async function gotoB(input: WorkflowContext): Promise<WorkflowContext> {
         ctx = await C(ctx);
 
         if (c2(ctx)) {
-            ctx = await F(ctx);
+            ctx = await E(ctx);
         } else {
             return await gotoA(ctx);
         }
@@ -186,7 +186,7 @@ async function gotoB(input: WorkflowContext): Promise<WorkflowContext> {
         ctx = await D(ctx);
 
         if (c3(ctx)) {
-            ctx = await G(ctx);
+            ctx = await F(ctx);
         } else {
             return await gotoB(ctx);
         }

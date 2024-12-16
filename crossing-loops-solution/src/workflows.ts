@@ -3,7 +3,7 @@ import { continueAsNew, sleep, log, proxyActivities, executeChild } from '@tempo
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from './types/context';
 import type * as activities from './activities';
 
-const {A, B, C, D, F, G} = proxyActivities<typeof activities>({
+const {A, B, C, D, E, F} = proxyActivities<typeof activities>({
     startToCloseTimeout: '1 minute',
 });
 
@@ -44,7 +44,7 @@ export async function childWorkflowWithStartB(input: WorkflowContext): Promise<W
     } else {
         ctx = await D(ctx);
         if (c3(ctx)) {
-            ctx = await G(ctx);
+            ctx = await F(ctx);
         } else {
             ctx = await continueAsNew<typeof childWorkflowWithStartB>(ctx);
         }
@@ -60,7 +60,7 @@ export async function childWorkflowWithStartD(input: WorkflowContext): Promise<W
 
     ctx = await C(ctx);
     if (c2(ctx)) {
-        ctx = await F(ctx);
+        ctx = await E(ctx);
     } else {
         // This becomes problematic I think? We execute a workflow as child, but this is also the root workflow
         ctx = await executeChild(loopingWorkflow, {args: [ctx]});
