@@ -95,49 +95,61 @@ export async function workflowOption2(input: WorkflowInput): Promise<WorkflowOut
     return ctx;
 }
 
+enum StateMachineActivities {
+    A = 'A',
+    B = 'B',
+    C = 'C',
+    D = 'D',
+    E = 'E',
+    F = 'F',
+    exit = 'exit',
+}
+
 export async function workflowOption3(input: WorkflowInput): Promise<WorkflowOutput> {
     let ctx: WorkflowContext = {
         ...input
     }
 
-    let nextEvent: 'A' | 'B' | 'C' | 'D' | 'E' | 'F' = 'A';
+    let nextActivity: StateMachineActivities = StateMachineActivities.A;
 
-    while (true) {
-        switch (nextEvent) {
+    while (nextActivity !== StateMachineActivities.exit) {
+        switch (nextActivity) {
             case 'A':
                 ctx = await A(ctx);
-                nextEvent = 'B';
+                nextActivity = StateMachineActivities.B;
                 break;
             case 'B':
                 ctx = await B(ctx);
                 if (c1(ctx)) {
-                    nextEvent = 'C';
+                    nextActivity = StateMachineActivities.C;
                 } else {
-                    nextEvent = 'D';
+                    nextActivity = StateMachineActivities.D;
                 }
                 break;
             case 'C':
                 ctx = await C(ctx);
                 if (c2(ctx)) {
-                    nextEvent = 'F';
+                    nextActivity = StateMachineActivities.F;
                 } else {
-                    nextEvent = 'A';
+                    nextActivity = StateMachineActivities.A;
                 }
                 break;
             case 'D':
                 ctx = await D(ctx);
                 if (c3(ctx)) {
-                    nextEvent = 'E';
+                    nextActivity = StateMachineActivities.E;
                 } else {
-                    nextEvent = 'B';
+                    nextActivity = StateMachineActivities.B;
                 }
                 break;
             case 'E':
                 ctx = await E(ctx);
-                return ctx;
+                nextActivity = StateMachineActivities.exit;
+                break;
             case 'F':
                 ctx = await F(ctx);
-                return ctx;
+                nextActivity = StateMachineActivities.exit;
+                break;
             default:
                 throw new Error('Unknown activity');
         }
