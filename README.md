@@ -4,10 +4,28 @@ For each question we draw a diagram which looks like the following:
 
 ```mermaid
 flowchart LR
-    A[Activity] --Transition--> B[Activity]
-    C[Activity]
-    B -.C1.-> C[Activity]
-    B -.else.-x D[Activity]
+    A[A] --Transition--> B[B]
+    C[C]
+    B -.C1.-> C[C]
+    B -.else.-x D[D]
+```
+
+```typescript
+export async function workflow(input: WorkflowInput): Promise<WorkflowOutput> {
+    let ctx: WorkflowContext = {
+        ...input
+    }
+    
+    ctx = await A(ctx);
+    ctx = await B(ctx);
+    if (C1()) {
+        ctx = await C(ctx);
+    } else {
+        ctx = await D(ctx);
+    }
+    
+    return ctx;
+}
 ```
 
 Additionally, we will link to our own perception of the correct implementation for Temporal on how to handle the situation.
