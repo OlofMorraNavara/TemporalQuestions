@@ -16,8 +16,10 @@ Feel free to create a PR if you have a better solution.
 ## How to handle 'loops'?
 ```mermaid
 flowchart LR
-    A ----> B
-    B -.if C1 is true.-> A
+    subgraph loop
+        A ----> B
+        B -.if C1 is true.-> A
+    end
     B -.else.-x C
 ```
 
