@@ -10,3 +10,5 @@ yarn-error.log*
 .pnp.js
 
 .vscode/*
+/.idea/modules.xml
+/.idea/TemporalQuestions.iml
