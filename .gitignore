@@ -14,5 +14,5 @@ yarn-error.log*
 /.idea/TemporalQuestions.iml
 
 
-/.idea
 /timer-race-solution/.idea
+/.idea/
