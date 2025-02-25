@@ -12,3 +12,7 @@ yarn-error.log*
 .vscode/*
 /.idea/modules.xml
 /.idea/TemporalQuestions.iml
+
+
+/timer-race-solution/.idea
+/.idea/
