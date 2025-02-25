@@ -12,7 +12,7 @@ export const TimedActivity = createActivity({
         return ctx;
     },
     run: async (ctx: WorkflowContext) => {
-        await sleep(11000);
+        await sleep(6000);
         ctx._generated.TimedActivity = true;
         return ctx;
     },

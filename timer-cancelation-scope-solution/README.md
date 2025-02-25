@@ -1,4 +1,4 @@
-# Intermediate timers using promise race
+# Intermediate timers using cancellation scopes
 
 This is the default project that is scaffolded out when you run `.......`.
 
