@@ -2,18 +2,18 @@ import { sleep, log } from '@temporalio/activity';
 import { createActivity } from './create';
 import { WorkflowContext } from '../types/context';
 
-export const TimedActivity = createActivity({
+export const Extra2 = createActivity({
     initiated: async (ctx: WorkflowContext) => {
-        log.info(`Running initial script for: TimedActivity`);
+        log.info(`Running initial script for: Extra2`);
         return ctx;
     },
     completed: async (ctx: WorkflowContext) => {
-        log.info(`Running completed script for: TimedActivity`);
+        log.info(`Running completed script for: Extra2`);
         return ctx;
     },
     run: async (ctx: WorkflowContext) => {
-        await sleep(11000);
-        ctx._generated.TimedActivity = true;
+        ctx._generated.extra2 = true;
+        await sleep(12000);
         return ctx;
     },
 });
