@@ -18,6 +18,22 @@ const { StartEvent, EndEvent, TimedActivity, NormalActivity, Timer1, Timer2, Tim
     });
 
 
+
+class TimedActivityTimedOut extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "TimedActivityTimedOut";
+        Object.setPrototypeOf(this, TimedActivityTimedOut.prototype);
+    }
+}
+class DeadlineTimedOut extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "DeadlineTimedOut";
+        Object.setPrototypeOf(this, DeadlineTimedOut.prototype);
+    }
+}
+
 export async function TimerProcessCancellationScopes(input: WorkflowInput): Promise<WorkflowOutput> {
     let ctx: WorkflowContext = {
         _generated: {} as Record<string, any>,
@@ -40,7 +56,6 @@ export async function TimerProcessCancellationScopes(input: WorkflowInput): Prom
                 ctx._generated.__TimerDuration1 = await __DetermineDeadlineTimer1(ctx);
                 ctx._generated.__TimerDuration2 = await __DetermineDeadlineTimer2(ctx);
                 ctx._generated.__TimerDuration3 = await __DetermineDeadlineTimer3(ctx);
-                ctx._generated.__deadlineScopeExpired = false;
 
                 const timedActivityScope = new CancellationScope();
 
@@ -53,27 +68,28 @@ export async function TimerProcessCancellationScopes(input: WorkflowInput): Prom
                         const timedActivityPromise = TimedActivity(ctx)
                             .then(() => {
                                 nextActivity = StateMachineActivities.NormalActivity;
-                                console.log('Olivier timedActivityScope cancelled');
-                                deadlineScope.cancel();
-                                timedActivityScope.cancel();
+                                throw new TimedActivityTimedOut('TimedActivity timed out');
                             });
 
                         const deadlineTimerPromise = Timer3(ctx)
                             .then(async (result) => {
                                 ctx = result;
                                 console.log('Olivier deadlineScope cancelled');
-                                deadlineScope.cancel();
-                        });
+                                throw new DeadlineTimedOut('Deadline timed out');
+                            });
 
                         await Promise.all([timedActivityPromise, deadlineTimerPromise]);
 
                     }).catch((err) => {
                         console.log('Olivier catch deadlineScope');
                         console.log('Olivier typeof', err.constructor.name);
-                        if (err instanceof ActivityFailure) {
+                        if (err instanceof DeadlineTimedOut) {
                             console.log('Olivier deadlineScope ActivityFailure');
                             ctx._generated.__deadlineScopeExpired = true;
                             nextActivity = StateMachineActivities.EndEvent2;
+                        }
+                        else {
+                            throw err;
                         }
                     });
 
@@ -93,8 +109,11 @@ export async function TimerProcessCancellationScopes(input: WorkflowInput): Prom
 
                 }).catch((err) => {
                     console.log('Olivier timedActivityScope catch');
-                    if (err instanceof ActivityFailure) {
-                        console.log('Olivier timedActivityScope ActivityFailure');
+                    console.log('Olivier typeof', err.constructor.name);
+                    if (err instanceof TimedActivityTimedOut) {
+                        console.log('Olivier timedActivityScope TimedActivityTimedOut');
+                        ctx._generated.__deadlineScopeExpired = false;
+
                     }
                 });
 
