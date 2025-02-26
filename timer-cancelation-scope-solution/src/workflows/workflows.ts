@@ -140,7 +140,7 @@ async function __DetermineDeadlineTimer1(ctx: WorkflowContext) {
 }
 async function __DetermineDeadlineTimer2(ctx: WorkflowContext) {
     // DeadlineDuration script 2
-    return 5000; // TODO: wanneer dit gelijk is aan de timedActivity duration zal deze alsnog aflopen en dus een childflow starten.
+    return 5000;
 }
 async function __DetermineDeadlineTimer3(ctx: WorkflowContext) {
     // DeadlineDuration script 3
