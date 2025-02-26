@@ -1,8 +1,6 @@
 import {
-    ActivityFailure,
     CancellationScope,
-    CancelledFailure,
-    executeChild,
+    executeChild, isCancellation,
     ParentClosePolicy,
     proxyActivities
 } from '@temporalio/workflow';
@@ -43,73 +41,61 @@ export async function TimerProcessCancellationScopes(input: WorkflowInput): Prom
                 ctx._generated.__deadlineScopeExpired = false;
 
                 const timedActivityScope = new CancellationScope();
+                const timerScope1 = new CancellationScope();
+                const timerScope2 = new CancellationScope();
+                const deadlineTimerScope = new CancellationScope();
 
-                // TODO timedActivityScope
-                await timedActivityScope.run(async () => {
-                    const deadlineScope = new CancellationScope();
+                const timedActivityPromise = timedActivityScope.run(() => TimedActivity(ctx));
+                const timer1Promise = timerScope1.run(() => Timer1(ctx));
+                const timer2Promise = timerScope2.run(() => Timer2(ctx));
+                const timer3Promise = deadlineTimerScope.run(() => Timer3(ctx));
 
-                    // TODO deadlineScope
-                    const deadlineScopePromise = deadlineScope.run(async () => {
-                        const timedActivityPromise = TimedActivity(ctx)
-                            .then(() => {
-                                nextActivity = StateMachineActivities.NormalActivity;
-                                console.log('Olivier timedActivityScope cancelled');
-                                deadlineScope.cancel();
-                                timedActivityScope.cancel();
-                            });
-
-                        const deadlineTimerPromise = Timer3(ctx)
-                            .then(async (result) => {
-                                ctx = result;
-                                console.log('Olivier deadlineScope cancelled');
-                                deadlineScope.cancel();
+                async function handleTimer(timerPromise: Promise<WorkflowContext>, childWorkflow: (ctx: WorkflowContext) => Promise<WorkflowOutput>, timerName: string) {
+                    try {
+                        await timerPromise;
+                        console.log(`childworkflow voor ${timerName} gestart`);
+                        executeChild(childWorkflow, {
+                            args: [ctx],
+                            parentClosePolicy: ParentClosePolicy.ABANDON,
                         });
-
-                        await Promise.all([timedActivityPromise, deadlineTimerPromise]);
-
-                    }).catch((err) => {
-                        console.log('Olivier catch deadlineScope');
-                        console.log('Olivier typeof', err.constructor.name);
-                        if (err instanceof ActivityFailure) {
-                            console.log('Olivier deadlineScope ActivityFailure');
-                            ctx._generated.__deadlineScopeExpired = true;
-                            nextActivity = StateMachineActivities.EndEvent2;
+                    } catch (err) {
+                        if (isCancellation(err)) {
+                            console.log(`Timer ${timerName} is gecanceled`);
+                        } else {
+                            throw err;
                         }
-                    });
+                    }
+                }
 
-                    // TODO: Sub flow timer 1
-                    const timer1 = Timer1(ctx).then(async (result) => {
-                        executeChild(Timer1Child, { args: [ctx], parentClosePolicy: ParentClosePolicy.ABANDON, });
-                    });
+                handleTimer(timer1Promise, Timer1Child, 'Timer1');
+                handleTimer(timer2Promise, Timer2Child, 'Timer2');
 
-                    // TODO: Sub flow timer 2
-                    const timer2 = Timer2(ctx).then(async (result) => {
-                        executeChild(Timer2Child, { args: [ctx], parentClosePolicy: ParentClosePolicy.ABANDON, });
-                    });
-
-                    // TODO: resolve promises.
-                    await Promise.all([timer1, timer2, deadlineScopePromise]);
-
-
+                timer3Promise.then(() => {
+                    console.log("deadline bereikt TimedActivity wordt gecanceled");
+                    ctx._generated.__deadlineScopeExpired = true;
+                    timedActivityScope.cancel();
                 }).catch((err) => {
-                    console.log('Olivier timedActivityScope catch');
-                    if (err instanceof ActivityFailure) {
-                        console.log('Olivier timedActivityScope ActivityFailure');
+                    if (isCancellation(err)) {
+                        console.log(`Timer Timer3 is gecanceled`);
+                    } else {
+                        throw err;
                     }
                 });
 
+                try {
+                    await timedActivityPromise;
+                    console.log("TimedActivity done, resterende timers worden gecanceled");
+                    timerScope1.cancel();
+                    timerScope2.cancel();
+                    deadlineTimerScope.cancel();
+                } catch (err) {
+                    if (isCancellation(err)) {
+                        console.log("TimedActivity is gecancelled door een timer");
+                    } else {
+                        throw err;
+                    }
+                }
 
-
-
-                //todo:
-                // soort circulaire scope
-                // 1. timed activity met 3 timers. wanneer timed activity klaar is, moeten de timers ook stoppen.
-                // 2. wanneer de deadline timer klaar is, moet de timed activity ook stoppen.
-                // Scope met 4 calls waarbij deze gestopt wordt wanneer de timed activity klaar is.
-                // Een inner scope met 2 calls. De timed activity + deadline.
-
-
-                console.log('Olivier __deadlineScopeExpired', ctx._generated.__deadlineScopeExpired)
                 if(ctx._generated.__deadlineScopeExpired) {
                     nextActivity = StateMachineActivities.EndEvent2;
                 }
@@ -150,15 +136,15 @@ export async function Timer2Child(ctx: WorkflowContext): Promise<WorkflowOutput>
 // Determine timer deadlines:
 async function __DetermineDeadlineTimer1(ctx: WorkflowContext) {
     // DeadlineDuration script 1
-    return 1000;
+    return 3000;
 }
 async function __DetermineDeadlineTimer2(ctx: WorkflowContext) {
     // DeadlineDuration script 2
-    return 3000;
+    return 5000; // TODO: wanneer dit gelijk is aan de timedActivity duration zal deze alsnog aflopen en dus een childflow starten.
 }
 async function __DetermineDeadlineTimer3(ctx: WorkflowContext) {
     // DeadlineDuration script 3
-    return 5000;
+    return 7000;
 }
 
 function mapContextToOutput(ctx: WorkflowContext): WorkflowOutput {
