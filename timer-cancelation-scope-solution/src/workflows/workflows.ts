@@ -53,14 +53,14 @@ export async function TimerProcessCancellationScopes(input: WorkflowInput): Prom
                 async function handleTimer(timerPromise: Promise<WorkflowContext>, childWorkflow: (ctx: WorkflowContext) => Promise<WorkflowOutput>, timerName: string) {
                     try {
                         await timerPromise;
-                        console.log(`childworkflow voor ${timerName} gestart`);
+                        console.log(`Childworkflow for ${timerName} has started.`);
                         executeChild(childWorkflow, {
                             args: [ctx],
                             parentClosePolicy: ParentClosePolicy.ABANDON,
                         });
                     } catch (err) {
                         if (isCancellation(err)) {
-                            console.log(`Timer ${timerName} is gecanceled`);
+                            console.log(`Timer ${timerName} is canceled.`);
                         } else {
                             throw err;
                         }
@@ -71,12 +71,12 @@ export async function TimerProcessCancellationScopes(input: WorkflowInput): Prom
                 handleTimer(timer2Promise, Timer2Child, 'Timer2');
 
                 timer3Promise.then(() => {
-                    console.log("deadline bereikt TimedActivity wordt gecanceled");
+                    console.log("Deadline passed, TimedActivity being gecanceled.");
                     ctx._generated.__deadlineScopeExpired = true;
                     timedActivityScope.cancel();
                 }).catch((err) => {
                     if (isCancellation(err)) {
-                        console.log(`Timer Timer3 is gecanceled`);
+                        console.log(`Deadline timer is canceled.`);
                     } else {
                         throw err;
                     }
@@ -84,13 +84,13 @@ export async function TimerProcessCancellationScopes(input: WorkflowInput): Prom
 
                 try {
                     await timedActivityPromise;
-                    console.log("TimedActivity done, resterende timers worden gecanceled");
+                    console.log("TimedActivity done, remaining timers are being canceled.");
                     timerScope1.cancel();
                     timerScope2.cancel();
                     deadlineTimerScope.cancel();
                 } catch (err) {
                     if (isCancellation(err)) {
-                        console.log("TimedActivity is gecancelled door een timer");
+                        console.log("TimedActivity has been cancelled by a timer");
                     } else {
                         throw err;
                     }
