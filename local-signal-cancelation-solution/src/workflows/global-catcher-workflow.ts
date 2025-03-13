@@ -1,0 +1,40 @@
+import {
+    getExternalWorkflowHandle, workflowInfo, ParentWorkflowInfo, WorkflowInfo, setHandler
+} from '@temporalio/workflow';
+import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../types/context';
+import * as signals from '../signals';
+
+//TODO: 'Local' thrower:
+export async function yourWorkflowThatSignals(ctx: WorkflowContext) {
+    const handle = getExternalWorkflowHandle('local-signal-example'); // TODO: Replace with your workflow name. workflowInfo().parent does not work.
+    await handle.signal(signals.cancelSignal);
+}
+
+export async function GlobalSignalCatcherCancellation(input: WorkflowInput): Promise<WorkflowOutput> {
+    let ctx: WorkflowContext = {
+        _generated: {} as Record<string, any>,
+        ...input,
+    };
+
+    // TODO: Global handler
+    setHandler(signals.globalCancelSignal, () => {
+        waitingForGlobalSignal = false;
+    });
+
+    // TODO: Bad polling mechanism.
+    let waitingForGlobalSignal = true;
+    while (waitingForGlobalSignal) {
+        //await new Promise( resolve => setTimeout(resolve, 1000) );  TODO: Bad poll checks every second. Can this be done differently?
+
+        // TODO: Temp for testing purpose. Takes X seconds to receive global cancellation signal.
+        await new Promise( resolve => {
+            waitingForGlobalSignal = false;
+            setTimeout(resolve, 2000)
+        });
+    }
+
+    // TODO throw local.
+    await yourWorkflowThatSignals(ctx)
+
+    return ctx;
+}
