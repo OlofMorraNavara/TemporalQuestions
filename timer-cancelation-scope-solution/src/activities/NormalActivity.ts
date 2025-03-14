@@ -1,4 +1,4 @@
-import { log } from '@temporalio/activity';
+import {log, sleep} from '@temporalio/activity';
 import { createActivity } from './create';
 import { WorkflowContext } from '../types/context';
 
@@ -13,6 +13,7 @@ export const NormalActivity = createActivity({
     },
     run: async (ctx: WorkflowContext) => {
         ctx._generated.NormalActivity = true;
+        await sleep(10000)
         return ctx;
     },
 });
