@@ -1,6 +1,7 @@
-import {cancelled, heartbeat, log, sleep} from '@temporalio/activity';
+import { heartbeat, log, sleep} from '@temporalio/activity';
 import { createActivity } from './create';
 import { WorkflowContext } from '../types/context';
+import {CancelledFailure} from "@temporalio/client";
 
 export const ToCancelActivity = createActivity({
     initiated: async (ctx: WorkflowContext) => {
@@ -12,13 +13,31 @@ export const ToCancelActivity = createActivity({
         return ctx;
     },
     run: async (ctx: WorkflowContext) => {
-        for (let i = 0; i < 5; i++) {
-            await sleep(1000);
-            console.log('Heartbeat send from ToCancelActivity');
-            heartbeat();
-            await cancelled().catch(() => {console.log('Catch cancellation in ToCancelActivity')})
+        try {
+            await Promise.race([
+                // Heartbeats
+                (async () => {
+                    while(true) {
+                        await sleep(10);
+                        heartbeat();
+                    }
+                })(),
+                // Run logic
+                (async () => {
+                    for (let i = 0; i < 3; i++) {
+                        console.warn('Run logic', {i});
+                        await sleep(1000);
+                    }
+                })()
+            ])
         }
-
+        catch (err) {
+            if (err instanceof CancelledFailure) {
+                console.warn('Activity cancelled 1', { message: err.message });
+                // TODO: Cancelled script.
+            }
+            throw err;
+        }
         return ctx;
     },
 });

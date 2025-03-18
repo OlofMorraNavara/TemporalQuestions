@@ -1,20 +1,30 @@
 import {
-    allHandlersFinished,
-    CancellationScope, executeChild, inWorkflowContext, isCancellation, ParentClosePolicy,
+    ActivityCancellationType,
+    CancellationScope, executeChild, isCancellation, ParentClosePolicy,
     proxyActivities,
-    setHandler, startChild,
+    setHandler,
 } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../types/context';
 import type * as activities from '../activities';
 import * as signals from '../signals';
 import {GlobalSignalCatcherCancellation} from "./index";
 
-const { StartEvent, EndEvent, EndEvent2, ToCancelActivity, ToCancelActivity2, LocalSignal } = proxyActivities<typeof activities>({
+
+const {  ToCancelActivity, ToCancelActivity2 } = proxyActivities<typeof activities>({
     startToCloseTimeout: '1 minute',
     retry: {
         maximumAttempts: 3,
     },
-    heartbeatTimeout: '35s',
+    heartbeatTimeout: '20ms',
+    cancellationType: ActivityCancellationType.WAIT_CANCELLATION_COMPLETED,
+});
+
+const { StartEvent, EndEvent, EndEvent2, LocalSignal } = proxyActivities<typeof activities>({
+    startToCloseTimeout: '1 minute',
+    retry: {
+        maximumAttempts: 3,
+    },
+
 });
 
 async function startGlobalListeners(ctx: WorkflowContext) {
@@ -46,29 +56,25 @@ export async function LocalSignalCancellation(input: WorkflowInput): Promise<Wor
     let nextActivity: StateMachineActivities = StateMachineActivities.ToCancelActivity;
     while (nextActivity !== StateMachineActivities.exit) {
         switch (nextActivity) {
-            // TODO: Activity with cancellation signal.
             case StateMachineActivities.ToCancelActivity:
                 let cancelledBySignal = false;
                 const cancellationScope = new CancellationScope();
+                const cancellationPromise = cancellationScope
+                    .run(async () => await ToCancelActivity(ctx))
+                    .catch((err) => {
+                        console.warn('Caught cancellation in cancellationScope 1');
+                        if (isCancellation(err)) {
+                            cancelledBySignal = true;
+                        }
+                    });
 
                 setHandler(signals.cancelSignal, () => {
-                    // TODO: Cancel the activity. Does not cancel atm.
-                    //  What to do with the cancellation script?
                     ctx._generated.handlerCancelation = true;
-                    console.log('oli4 komt in handler 1')
+                    console.warn('Local cancellation signal caught in handler 1')
                     cancellationScope.cancel()
                 });
 
-                await cancellationScope
-                    .run(async () => await ToCancelActivity(ctx))
-                    .catch((err) => {
-                        console.log('oli5 komt in catch 1', err.constructor.name, err.message, err.stack);
-                        if (isCancellation(err)) {
-                            cancelledBySignal = true;
-                        } else {
-                            throw err;
-                        }
-                });
+                await cancellationPromise;
 
                 ctx._generated.cancelledBySignal = cancelledBySignal;
 
@@ -86,25 +92,22 @@ export async function LocalSignalCancellation(input: WorkflowInput): Promise<Wor
             case StateMachineActivities.ToCancelActivity2:
                 let cancelledBySignal2 = false;
                 const cancellationScope2 = new CancellationScope();
+                const cancellation2Promise = cancellationScope2
+                    .run(async () => await ToCancelActivity2(ctx))
+                    .catch((err) => {
+                        console.warn('Caught cancellation in cancellationScope 2');
+                        if (isCancellation(err)) {
+                            cancelledBySignal2 = true;
+                        }
+                    });
 
                 setHandler(signals.cancelSignal, () => {
-                    // TODO: Cancel the activity. Does not cancel atm.
-                    //  What to do with the cancellation script?
                     ctx._generated.handlerCancelation2 = true;
-                    console.log('oli4 komt in handler 2')
+                    console.log('Local cancellation signal caught in handler 2')
                     cancellationScope2.cancel();
                 });
 
-                await cancellationScope2
-                    .run(async () => await ToCancelActivity2(ctx))
-                    .catch((err) => {
-                        console.log('oli5 komt in catch 2', err.constructor.name, err.message, err.stack);
-                        if (isCancellation(err)) {
-                            cancelledBySignal2 = true;
-                        } else {
-                            throw err;
-                        }
-                    });
+                await cancellation2Promise;
 
                 ctx._generated.cancelledBySignal2 = cancelledBySignal2;
 
