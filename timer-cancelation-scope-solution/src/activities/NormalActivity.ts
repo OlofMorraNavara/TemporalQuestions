@@ -13,7 +13,7 @@ export const NormalActivity = createActivity({
     },
     run: async (ctx: WorkflowContext) => {
         ctx._generated.NormalActivity = true;
-        await sleep(10000)
+        await sleep(5000)
         return ctx;
     },
 });
