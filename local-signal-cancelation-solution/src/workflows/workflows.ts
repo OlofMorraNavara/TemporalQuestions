@@ -9,7 +9,6 @@ import type * as activities from '../activities';
 import * as signals from '../signals';
 import {GlobalSignalCatcherCancellation} from "./index";
 
-
 const {  ToCancelActivity, ToCancelActivity2 } = proxyActivities<typeof activities>({
     startToCloseTimeout: '1 minute',
     retry: {
@@ -24,7 +23,6 @@ const { StartEvent, EndEvent, EndEvent2, LocalSignal } = proxyActivities<typeof 
     retry: {
         maximumAttempts: 3,
     },
-
 });
 
 async function startGlobalListeners(ctx: WorkflowContext) {
@@ -65,6 +63,7 @@ export async function LocalSignalCancellation(input: WorkflowInput): Promise<Wor
                         console.warn('Caught cancellation in cancellationScope 1');
                         if (isCancellation(err)) {
                             cancelledBySignal = true;
+                            ctx = err.cause.details[0] as WorkflowContext ?? ctx;
                         }
                     });
 
@@ -98,6 +97,7 @@ export async function LocalSignalCancellation(input: WorkflowInput): Promise<Wor
                         console.warn('Caught cancellation in cancellationScope 2');
                         if (isCancellation(err)) {
                             cancelledBySignal2 = true;
+                            ctx = err.cause.details[0] as WorkflowContext ?? ctx;
                         }
                     });
 

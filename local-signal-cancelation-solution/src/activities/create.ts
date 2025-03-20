@@ -1,4 +1,6 @@
 import { WorkflowContext } from '../types/context';
+import {heartbeat, sleep} from "@temporalio/activity";
+import {CancelledFailure} from "@temporalio/client";
 
 export function createActivity({
     inputDataMapper,
@@ -6,23 +8,47 @@ export function createActivity({
     run,
     initiated,
     completed,
+    cancelled,
 }: {
     inputDataMapper?: (ctx: WorkflowContext) => Promise<WorkflowContext>;
     outputDataMapper?: (ctx: WorkflowContext) => Promise<WorkflowContext>;
     run: (ctx: WorkflowContext) => Promise<WorkflowContext>;
     initiated: (ctx: WorkflowContext) => Promise<WorkflowContext>;
     completed: (ctx: WorkflowContext) => Promise<WorkflowContext>;
+    cancelled?: (ctx: WorkflowContext) => Promise<WorkflowContext>;
 }) {
     return async function (ctx: WorkflowContext) {
-        ctx = await initiated(ctx);
-        if (inputDataMapper != null) {
-            ctx = await inputDataMapper(ctx);
+        try {
+            await Promise.race([
+                (async () => {
+                    while(true) {
+                        await sleep(10);
+                        heartbeat();
+                    }
+                })(),
+                (async () => {
+                    ctx = await initiated(ctx);
+                    if (inputDataMapper != null) {
+                        ctx = await inputDataMapper(ctx);
+                    }
+                    ctx = await run(ctx);
+                    if (outputDataMapper != null) {
+                        ctx = await outputDataMapper(ctx);
+                    }
+                    ctx = await completed(ctx);
+                })()
+            ])
         }
-        ctx = await run(ctx);
-        if (outputDataMapper != null) {
-            ctx = await outputDataMapper(ctx);
+        catch (err) {
+            if (err instanceof CancelledFailure) {
+                console.log('Activity cancelled from create')
+                if (cancelled != null) {
+                    ctx = await cancelled(ctx);
+                }
+                throw new CancelledFailure(undefined, [ctx]);
+            }
+            throw err
         }
-        ctx = await completed(ctx);
         return ctx;
     };
 }

@@ -28,7 +28,7 @@ export async function GlobalSignalCatcherCancellation(input: WorkflowInput): Pro
 
         // TODO: Temp for testing purpose. Takes X seconds to receive global cancellation signal.
         await new Promise( resolve => {
-            setTimeout(resolve, 6000)
+            setTimeout(resolve, 3000)
             waitingForGlobalSignal = false;
         });
     }
