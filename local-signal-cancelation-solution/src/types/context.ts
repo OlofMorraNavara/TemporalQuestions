@@ -1,7 +1,8 @@
-export type WorkflowInput = {};
+export type WorkflowInput = {
+    _generated: Record<string, any>;
+};
 
 export type WorkflowOutput = {
-    _generated: Record<string, any>;
 };
 
 export type WorkflowContext = {

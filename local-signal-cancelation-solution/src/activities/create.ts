@@ -40,13 +40,6 @@ export function createActivity({
             ])
         }
         catch (err) {
-            if (err instanceof CancelledFailure) {
-                console.log('Activity cancelled from create')
-                if (cancelled != null) {
-                    ctx = await cancelled(ctx);
-                }
-                throw new CancelledFailure(undefined, [ctx]);
-            }
             throw err
         }
         return ctx;

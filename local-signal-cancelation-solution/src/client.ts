@@ -18,11 +18,15 @@ async function run(input: WorkflowInput): Promise<WorkflowOutput> {
         dataConverter: { payloadConverterPath: require.resolve('./payload-converter') },
     });
 
+    // Construct workflow ID, and add to the input.
+    const workflowId = 'local-signal-example';
+    input._generated.mainParentProcessWorkflowId = workflowId;
+
     const handle = await client.workflow.start(LocalSignalCancellation, {
         taskQueue: 'local-queue',
         args: [input],
         // in practice, use a meaningful business ID, like customerId or transactionId
-        workflowId: 'local-signal-example',
+        workflowId: workflowId,
     });
 
     console.log(`Started workflow ${handle.workflowId}`);
@@ -30,7 +34,9 @@ async function run(input: WorkflowInput): Promise<WorkflowOutput> {
     return await handle.result();
 }
 
-const input: WorkflowInput = {};
+const input: WorkflowInput = {
+    _generated: {} as Record<string, any>,
+};
 
 run(input).catch((err) => {
     console.error(err);
