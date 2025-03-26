@@ -1,3 +1,3 @@
-export { StartEvent } from './activities';
-export { LocalSignal } from './activities';
-export { EndEvent } from './activities';
+export { StartEvent } from "./activities";
+export { LocalSignal } from "./activities";
+export { EndEvent } from "./activities";

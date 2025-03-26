@@ -1,3 +1,3 @@
 export interface GlobalSignalInput {
-    name: string;
+  name: string;
 }
