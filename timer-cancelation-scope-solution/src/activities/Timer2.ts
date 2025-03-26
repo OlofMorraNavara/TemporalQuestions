@@ -1,6 +1,7 @@
-import { sleep, log } from '@temporalio/activity';
+import {sleep, log, heartbeat} from '@temporalio/activity';
 import { createActivity } from './create';
 import { WorkflowContext } from '../types/context';
+import {CancelledFailure} from "@temporalio/workflow";
 
 export const Timer2 = createActivity({
     initiated: async (ctx: WorkflowContext) => {
@@ -12,7 +13,27 @@ export const Timer2 = createActivity({
         return ctx;
     },
     run: async (ctx: WorkflowContext) => {
-        await sleep(ctx._generated.__TimerDuration2);
+        try {
+            await Promise.race([
+                // Heartbeats
+                (async () => {
+                    while(true) {
+                        await sleep(10);
+                        heartbeat();
+                    }
+                })(),
+                // Run logic
+                (async () => {
+                    await sleep(ctx._generated.__TimerDuration2);
+                })()
+            ])
+        }
+        catch (err) {
+            if (err instanceof CancelledFailure) {
+                console.warn('Timer 2 cancelled', { message: err.message });
+            }
+            throw err;
+        }
         ctx._generated.Timer2Timeout = true;
         return ctx;
     },

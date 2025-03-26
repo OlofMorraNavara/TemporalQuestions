@@ -14,5 +14,6 @@ yarn-error.log*
 /.idea/TemporalQuestions.iml
 
 
+/local-signal-cancelation-solution/.idea
 /timer-race-solution/.idea
 /.idea/

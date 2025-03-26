@@ -1,19 +1,17 @@
-import {log, sleep} from '@temporalio/activity';
+import { log } from '@temporalio/activity';
 import { createActivity } from './create';
 import { WorkflowContext } from '../types/context';
 
-export const NormalActivity = createActivity({
+export const LocalSignal = createActivity({
     initiated: async (ctx: WorkflowContext) => {
-        log.info(`Running initial script for: NormalActivity`);
+        log.info(`Running initial script for: LocalSignal`);
         return ctx;
     },
     completed: async (ctx: WorkflowContext) => {
-        log.info(`Running completed script for: NormalActivity`);
+        log.info(`Running completed script for: LocalSignal`);
         return ctx;
     },
     run: async (ctx: WorkflowContext) => {
-        ctx._generated.NormalActivity = true;
-        await sleep(5000)
         return ctx;
     },
 });

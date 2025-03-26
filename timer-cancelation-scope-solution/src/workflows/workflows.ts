@@ -1,4 +1,5 @@
 import {
+    ActivityCancellationType,
     CancellationScope,
     executeChild, isCancellation,
     ParentClosePolicy,
@@ -7,13 +8,24 @@ import {
 import type * as activities from '../activities';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../types/context';
 
-const { StartEvent, EndEvent, TimedActivity, NormalActivity, Timer1, Timer2, Timer3, Extra1, Extra2, EndEvent2 } =
+const { Timer1, Timer2, Timer3, TimedActivity } =
     proxyActivities<typeof activities>({
         startToCloseTimeout: '1 minute',
         retry: {
             maximumAttempts: 3,
         },
-    });
+        heartbeatTimeout: '20ms',
+        cancellationType: ActivityCancellationType.WAIT_CANCELLATION_COMPLETED,
+});
+
+
+const { StartEvent, EndEvent, NormalActivity, Extra1, Extra2, EndEvent2 } =
+    proxyActivities<typeof activities>({
+        startToCloseTimeout: '1 minute',
+        retry: {
+            maximumAttempts: 3,
+        },
+});
 
 
 export async function TimerProcessCancellationScopes(input: WorkflowInput): Promise<WorkflowOutput> {
