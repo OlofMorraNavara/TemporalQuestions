@@ -21,18 +21,19 @@ export async function throwLocalSignal(globalSignalInput?: GlobalSignalInput) {
 async function registerGlobalListener() {
   try {
     await axios.post(
-        "http://localhost:9090/v1/register",
-        {
-          workflow_id: workflowInfo().workflowId,
-          signal_name: signals.globalSignal.name,
+      "http://localhost:9090/v1/register",
+      {
+        workflow_id: workflowInfo().workflowId,
+        signal_name: signals.globalSignal.name,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
         },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-        },
-    });
+      },
+    );
   } catch (err) {
-      console.log("Error registering global listener", err);
+    console.log("Error registering global listener", err);
   }
 }
 
