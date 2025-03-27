@@ -20,10 +20,8 @@ export async function throwLocalSignal(globalSignalInput?: GlobalSignalInput) {
 
 async function registerGlobalListener() {
   try {
-    const workflowId = workflowInfo().workflowId;
-
     await axios.post("URL", {
-      workflowId: workflowId,
+      workflowId: workflowInfo().workflowId,
       type: workflowInfo().workflowType,
     });
   } catch (err) {
