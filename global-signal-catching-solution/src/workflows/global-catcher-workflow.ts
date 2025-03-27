@@ -10,11 +10,25 @@ import {
 } from "../types/context";
 import * as signals from "../signals";
 import { GlobalSignalInput } from "../signals/signal-data/GlobalSignalInput";
+import axios from 'axios';
 
 //TODO: 'Local' thrower:
 export async function throwLocalSignal(globalSignalInput?: GlobalSignalInput) {
   const handle = getExternalWorkflowHandle(workflowInfo().parent.workflowId);
   await handle.signal(signals.localSignal, globalSignalInput);
+}
+
+async function registerGlobalListener() {
+  try {
+    const workflowId = workflowInfo().workflowId;
+
+    await axios.post("URL", {
+      workflowId: workflowId,
+      type: workflowInfo().workflowType,
+    });
+  } catch (err) {
+    console.log('Error registering global listener', err);
+  }
 }
 
 export async function GlobalSignalCatcher(
@@ -24,6 +38,8 @@ export async function GlobalSignalCatcher(
     _generated: {} as Record<string, any>,
     ...input,
   };
+
+  await registerGlobalListener();
 
   // TODO: Global signal handler
   let globalSignalInput: GlobalSignalInput;
