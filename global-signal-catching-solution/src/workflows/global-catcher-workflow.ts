@@ -25,6 +25,7 @@ async function registerGlobalListener() {
       {
         workflow_id: workflowInfo().workflowId,
         signal_name: signals.globalSignal.name,
+        namespace: "default",
       },
       {
         headers: {
