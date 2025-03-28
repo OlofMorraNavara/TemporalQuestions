@@ -3,6 +3,7 @@ import {
   ParentClosePolicy,
   proxyActivities,
   setHandler,
+  sleep,
 } from "@temporalio/workflow";
 import {
   WorkflowContext,
@@ -11,7 +12,7 @@ import {
 } from "../types/context";
 import type * as activities from "../activities";
 import * as signals from "../signals";
-import { GlobalSignalCatcher } from "./index";
+import { GlobalSignalCatcher, GlobalSignalThrower } from "./index";
 import { GlobalSignalInput } from "../signals/signal-data/GlobalSignalInput";
 
 const { StartEvent, EndEvent, LocalSignal } = proxyActivities<
@@ -31,6 +32,14 @@ async function startGlobalListeners(ctx: WorkflowContext) {
   });
 }
 
+async function startGlobalThrower(ctx: WorkflowContext) {
+  executeChild(GlobalSignalThrower, {
+    args: [ctx],
+    workflowId: "GlobalSignalThrower",
+    parentClosePolicy: ParentClosePolicy.TERMINATE, // TODO or abandon.
+  });
+}
+
 export async function LocalSignalCatcher(
   input: WorkflowInput,
 ): Promise<WorkflowOutput> {
@@ -39,6 +48,9 @@ export async function LocalSignalCatcher(
     ...input,
   };
   await startGlobalListeners(ctx);
+  await startGlobalThrower(ctx);
+
+  await sleep(10000);
 
   ctx = await StartEvent(ctx);
 
