@@ -47,7 +47,7 @@ export async function LocalSignalCatcher(
     ...input,
   };
   await startGlobalListeners(ctx);
-  //await startGlobalThrower(ctx);
+  await startGlobalThrower(ctx);
 
   ctx = await StartEvent(ctx);
 

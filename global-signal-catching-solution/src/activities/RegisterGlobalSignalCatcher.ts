@@ -21,6 +21,10 @@ export const RegisterGlobalSignalCatcher = createActivity({
                     workflow_id: Context.current().info.workflowExecution.workflowId,
                     signal_name: signals.globalSignal.name,
                     namespace: 'default',
+                    signal_data: {
+                        CaseID: '1234', // ctx.CaseID,
+                        Header: '4566778', // ctx.Header,
+                    },
                 },
                 {
                     headers: {
