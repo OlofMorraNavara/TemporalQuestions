@@ -2,8 +2,7 @@ import {
   executeChild,
   ParentClosePolicy,
   proxyActivities,
-  setHandler,
-  sleep,
+  setHandler, sleep,
 } from "@temporalio/workflow";
 import {
   WorkflowContext,
@@ -48,9 +47,7 @@ export async function LocalSignalCatcher(
     ...input,
   };
   await startGlobalListeners(ctx);
-  await startGlobalThrower(ctx);
-
-  await sleep(10000);
+  //await startGlobalThrower(ctx);
 
   ctx = await StartEvent(ctx);
 
@@ -64,17 +61,13 @@ export async function LocalSignalCatcher(
   while (nextActivity !== StateMachineActivities.exit) {
     switch (nextActivity) {
       case StateMachineActivities.LocalSignal:
+
         // TODO: Local signal handler
         setHandler(signals.localSignal, (input: GlobalSignalInput) => {
-          waitingForLocalSignal = false;
           ctx._generated.localSignalInput = input;
         });
 
-        // TODO: Bad polling mechanism.
-        let waitingForLocalSignal = true;
-        while (waitingForLocalSignal) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        }
+        await sleep(5000)
 
         ctx = await LocalSignal(ctx);
         nextActivity = StateMachineActivities.EndEvent;
