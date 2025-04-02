@@ -1,4 +1,5 @@
 import {
+  ChildWorkflowCancellationType,
   executeChild,
   ParentClosePolicy,
   proxyActivities,
@@ -27,7 +28,9 @@ async function startGlobalListeners(ctx: WorkflowContext) {
   executeChild(GlobalSignalCatcher, {
     args: [ctx],
     workflowId: "GlobalSignalCatcher",
-    parentClosePolicy: ParentClosePolicy.TERMINATE, // TODO or abandon.
+    parentClosePolicy: ParentClosePolicy.REQUEST_CANCEL,
+    cancellationType: ChildWorkflowCancellationType.WAIT_CANCELLATION_COMPLETED
+    // TODO or abandon.
   });
 }
 
@@ -35,7 +38,8 @@ async function startGlobalThrower(ctx: WorkflowContext) {
   executeChild(GlobalSignalThrower, {
     args: [ctx],
     workflowId: "GlobalSignalThrower",
-    parentClosePolicy: ParentClosePolicy.TERMINATE, // TODO or abandon.
+    parentClosePolicy: ParentClosePolicy.REQUEST_CANCEL,
+    cancellationType: ChildWorkflowCancellationType.WAIT_CANCELLATION_COMPLETED
   });
 }
 
@@ -47,7 +51,7 @@ export async function LocalSignalCatcher(
     ...input,
   };
   await startGlobalListeners(ctx);
-  await startGlobalThrower(ctx);
+  //await startGlobalThrower(ctx);
 
   ctx = await StartEvent(ctx);
 
@@ -63,8 +67,8 @@ export async function LocalSignalCatcher(
       case StateMachineActivities.LocalSignal:
 
         // TODO: Local signal handler
-        setHandler(signals.localSignal, (input: GlobalSignalInput) => {
-          ctx._generated.localSignalInput = input;
+        setHandler(signals.localSignal, () => {
+          // TODO: Cancel
         });
 
         await sleep(5000)

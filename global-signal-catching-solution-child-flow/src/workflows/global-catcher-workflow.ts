@@ -14,7 +14,7 @@ const { RegisterGlobalSignalCatcher} = proxyActivities<
 });
 
 //TODO: 'Local' thrower:
-export async function throwLocalSignal(globalSignalInput?: GlobalSignalInput) {
+export async function throwLocalSignal() {
     const handle = getExternalWorkflowHandle(workflowInfo().parent.workflowId);
     await handle.signal(signals.localSignal, globalSignalInput);
 }
@@ -25,22 +25,22 @@ export async function GlobalSignalCatcher(input: WorkflowInput): Promise<Workflo
         ...input,
     };
 
-    await RegisterGlobalSignalCatcher(ctx);
+    // await RegisterGlobalSignalCatcher(ctx);
 
-    let globalSignalReceived = false;
-
-    // TODO: Global signal handler
-    let globalSignalInput: GlobalSignalInput;
-    setHandler(signals.globalSignal, (input: GlobalSignalInput) => {
-        globalSignalReceived = true;
-        globalSignalInput = input;
-    });
+    // let globalSignalReceived = false;
+    //
+    // // TODO: Global signal handler
+    // let globalSignalInput: GlobalSignalInput;
+    // setHandler(signals.globalSignal, (input: GlobalSignalInput) => {
+    //     globalSignalReceived = true;
+    //     globalSignalInput = input;
+    // });
 
     // TODO: Temporal polling mechanism.
-    await condition(() => globalSignalReceived)
+    //await condition(() => globalSignalReceived)
 
     // TODO throw local.
-    await throwLocalSignal(globalSignalInput);
+    await throwLocalSignal();
 
     return ctx;
 }
