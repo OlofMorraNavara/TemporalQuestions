@@ -28,6 +28,8 @@ In this example, we start a global signal catcher as a child flow, running in
 parallel with the main workflow. The global signal catcher notifies the parent
 workflow with a local signal when a signal is caught. Local signal handlers are
 registered in the main workflow to catch the signal.
+When the main flow is done, the global signal catchers are terminated using a signal.
+The global signal catchers are registered and terminated in the global signal orchestrator.
 
 ```mermaid
 graph LR;
