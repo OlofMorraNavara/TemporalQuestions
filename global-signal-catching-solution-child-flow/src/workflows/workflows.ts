@@ -1,9 +1,16 @@
 import {
+  ApplicationFailure,
+  CancellationScope,
   ChildWorkflowCancellationType,
+  defineSignal,
   executeChild,
+  getExternalWorkflowHandle,
+  isCancellation,
   ParentClosePolicy,
   proxyActivities,
-  setHandler, sleep,
+  setHandler,
+  sleep,
+  startChild,
 } from "@temporalio/workflow";
 import {
   WorkflowContext,
@@ -15,7 +22,7 @@ import * as signals from "../signals";
 import { GlobalSignalCatcher, GlobalSignalThrower } from "./index";
 import { GlobalSignalInput } from "../signals/signal-data/GlobalSignalInput";
 
-const { StartEvent, EndEvent, LocalSignal } = proxyActivities<
+const { StartEvent, EndEvent, EndEvent2, LocalSignal } = proxyActivities<
   typeof activities
 >({
   startToCloseTimeout: "1 minute",
@@ -25,21 +32,18 @@ const { StartEvent, EndEvent, LocalSignal } = proxyActivities<
 });
 
 async function startGlobalListeners(ctx: WorkflowContext) {
-  executeChild(GlobalSignalCatcher, {
+  startChild(GlobalSignalCatcher, {
     args: [ctx],
     workflowId: "GlobalSignalCatcher",
-    parentClosePolicy: ParentClosePolicy.REQUEST_CANCEL,
-    cancellationType: ChildWorkflowCancellationType.WAIT_CANCELLATION_COMPLETED
-    // TODO or abandon.
+    parentClosePolicy: ParentClosePolicy.ABANDON,
   });
 }
 
 async function startGlobalThrower(ctx: WorkflowContext) {
-  executeChild(GlobalSignalThrower, {
+  startChild(GlobalSignalThrower, {
     args: [ctx],
     workflowId: "GlobalSignalThrower",
-    parentClosePolicy: ParentClosePolicy.REQUEST_CANCEL,
-    cancellationType: ChildWorkflowCancellationType.WAIT_CANCELLATION_COMPLETED
+    parentClosePolicy: ParentClosePolicy.ABANDON,
   });
 }
 
@@ -58,6 +62,7 @@ export async function LocalSignalCatcher(
   enum StateMachineActivities {
     LocalSignal = "LocalSignal",
     EndEvent = "EndEvent",
+    EndEvent2 = "EndEvent2",
     exit = "exit",
   }
 
@@ -65,16 +70,38 @@ export async function LocalSignalCatcher(
   while (nextActivity !== StateMachineActivities.exit) {
     switch (nextActivity) {
       case StateMachineActivities.LocalSignal:
+        const cancellationScope = new CancellationScope();
 
-        // TODO: Local signal handler
-        setHandler(signals.localSignal, () => {
+        const cancellationScopePromise = cancellationScope
+          .run(async () => {
+            ctx = await LocalSignal(ctx);
+          }).catch((err) => {
+            if (isCancellation(err)) {
+              if (localSignalCaught) {
+                nextActivity = StateMachineActivities.EndEvent2;
+              }
+            } else {
+              throw err;
+            }
+          });
+
+        // TODO: Local signal catcher.
+        let localSignalCaught = false;
+        setHandler(defineSignal("localSignalCatcher"), () => {
+          localSignalCaught = true;
           // TODO: Cancel
+          cancellationScope.cancel();
+          // TODO: Reschedule
+          // ......
         });
 
-        await sleep(5000)
+        await cancellationScopePromise;
 
-        ctx = await LocalSignal(ctx);
-        nextActivity = StateMachineActivities.EndEvent;
+        if (localSignalCaught) {
+          nextActivity = StateMachineActivities.EndEvent2;
+        } else {
+          nextActivity = StateMachineActivities.EndEvent;
+        }
         break;
       case StateMachineActivities.EndEvent:
         ctx = await EndEvent(ctx);
@@ -85,5 +112,17 @@ export async function LocalSignalCatcher(
         break;
     }
   }
+
+  // TODO: Send done signal to global signal catchers.
+  try {
+    await getExternalWorkflowHandle("GlobalSignalCatcher").signal(
+      defineSignal("localSignalCatcherDone"),
+    );
+  } catch (err) {
+    if (err.type != "ExternalWorkflowExecutionNotFound") {
+      throw err;
+    }
+  }
+
   return ctx;
 }

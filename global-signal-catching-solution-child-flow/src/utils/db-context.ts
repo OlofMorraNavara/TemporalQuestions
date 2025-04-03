@@ -47,9 +47,12 @@ export class DbContext {
   ): Promise<any> {
     try {
       const collection = await DbContext.getCollection(collectionName);
-      return await collection.updateOne({ _id: new ObjectId(id) }, {
-        $set: documentJson,
-      });
+      return await collection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: documentJson,
+        },
+      );
     } catch (error) {
       console.error("Error in DbContext.update:", error);
       throw error;

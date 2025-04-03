@@ -1,6 +1,6 @@
-import { log } from "@temporalio/activity";
-import { createActivity } from "./create";
-import { WorkflowContext } from "../types/context";
+import { log, sleep } from "@temporalio/activity";
+import { createActivity } from "../create";
+import { WorkflowContext } from "../../types/context";
 
 export const LocalSignal = createActivity({
   initiated: async (ctx: WorkflowContext) => {
@@ -12,6 +12,7 @@ export const LocalSignal = createActivity({
     return ctx;
   },
   run: async (ctx: WorkflowContext) => {
+    await sleep(250000);
     return ctx;
   },
 });

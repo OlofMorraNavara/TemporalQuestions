@@ -1,6 +1,6 @@
 import { log } from "@temporalio/activity";
-import { createActivity } from "./create";
-import { WorkflowContext } from "../types/context";
+import { createActivity } from "../create";
+import { WorkflowContext } from "../../types/context";
 
 export const StartEvent = createActivity({
   initiated: async (ctx: WorkflowContext) => {
