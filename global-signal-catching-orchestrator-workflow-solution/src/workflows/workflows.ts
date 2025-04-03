@@ -1,7 +1,8 @@
 import {
-  executeChild,
+  ApplicationFailure,
+  executeChild, getExternalWorkflowHandle,
   ParentClosePolicy,
-  startChild,
+  startChild, workflowInfo,
 } from "@temporalio/workflow";
 import {
   WorkflowContext,
@@ -38,8 +39,9 @@ export async function OrchestratorWorkflow(
   await mainPromise;
 
   try {
+    const handle = getExternalWorkflowHandle('')
     await globalCatcherWorkflowHandle.signal(signals.localSignalCatcherDone);
-  } catch (err) {
+  } catch (err: ApplicationFailure) {
     if (err.type != "ExternalWorkflowExecutionNotFound") {
       throw err;
     }
