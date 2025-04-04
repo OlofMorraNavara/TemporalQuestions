@@ -28,6 +28,18 @@ export async function throwLocalSignal() {
   await handle.signal(defineSignal("localSignalCatcher"));
 }
 
+function handleMainFlowDoneSignal(ctx: WorkflowContext,state: { value: boolean }) {
+  setHandler(defineSignal('mainFlowDoneSignal'), () => {
+    state.value = true;
+  });
+}
+
+function handleGlobalCatcher(ctx: WorkflowContext, state: { value: boolean }) {
+  setHandler(signals.globalSignal, () => {
+    state.value = true;
+  });
+}
+
 export async function GlobalSignalCatcher(
   input: WorkflowInput,
 ): Promise<WorkflowOutput> {
@@ -40,24 +52,21 @@ export async function GlobalSignalCatcher(
   await RegisterGlobalSignalCatcher(ctx);
 
   // TODO: Global signal handler
-  let globalSignalReceived = false;
-  setHandler(signals.globalSignal, () => {
-    globalSignalReceived = true;
-  });
+  let globalSignalReceived = { value: false };
 
   // TODO: Main flow done received handler.
-  let localSignalCatcherDoneReceived = false;
-  setHandler(defineSignal("localSignalCatcherDone"), () => {
-    localSignalCatcherDoneReceived = true;
-  });
+  let localSignalCatcherDoneReceived = { value: false };
+
+  handleMainFlowDoneSignal(ctx, localSignalCatcherDoneReceived);
+  handleGlobalCatcher(ctx, globalSignalReceived);
 
   // TODO: Temporal polling mechanism.
-  await condition(() => globalSignalReceived || localSignalCatcherDoneReceived);
+  await condition(() => globalSignalReceived.value || localSignalCatcherDoneReceived.value);
 
   // TODO: Terminate the global signal catcher in the orchestrator.
   ctx = await TerminateGlobalSignalCatcher(ctx);
 
-  if (localSignalCatcherDoneReceived) {
+  if (localSignalCatcherDoneReceived.value) {
     return ctx;
   }
 
