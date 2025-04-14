@@ -24,7 +24,7 @@ export const Timer2 = createActivity({
         })(),
         // Run logic
         (async () => {
-          await sleep(ctx._generated.__TimerDuration1);
+          await sleep(ctx._generated.__TimerDuration2);
         })(),
       ]);
     } catch (err) {
@@ -33,7 +33,7 @@ export const Timer2 = createActivity({
       }
       throw err;
     }
-    ctx._generated.Timer1Timeout = true;
+    ctx._generated.Timer2Timeout = true;
     return ctx;
   },
 });

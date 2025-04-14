@@ -19,7 +19,8 @@ chmod +x install.sh && ./install.sh
    [Temporal Server](https://github.com/temporalio/cli/#installation).
 2. In another shell, `npm run start.watch` to start the Worker.
 3. In another shell, `npm run workflow` to run the Workflow Client.
-4. Send a signal containing form data from the Temporal Web UI to the running workflow.
+4. Send a signal containing form data from the Temporal Web UI to the running
+   workflow.
 
 ### Workflow
 
@@ -31,10 +32,14 @@ submitted form data.
   and submit it.
 - The second and third forms each have a timer defined. These forms must be
   submitted before the timer expires; otherwise, the processing is canceled or
-  follows an alternative path.
-- 
+  follows an alternative path. They also have a signal catcher attached. The
+  form will be cancelled when the signal is caught.
+
 ### Example form submit data
-Submit data is a JSON object containing key-value pairs. In typescript this is translated to Record<string, any>:
+
+Submit data is a JSON object containing key-value pairs. In typescript this is
+translated to Record<string, any>:
+
 ```json
 {
   "Test": "test"
@@ -42,6 +47,7 @@ Submit data is a JSON object containing key-value pairs. In typescript this is t
 ```
 
 ### Workflow diagram
+
 ```mermaid
 graph LR; 
    Start --> TaskUser;
@@ -50,6 +56,8 @@ graph LR;
    TaskUser2 -..->|Timer expires| End2;
    TaskUser3 --> End;
    TaskUser3 -..->|Timer expires| End2;
+   
+   GlobalCatcher -..->|cancel form signal| TaskUser2;
 
    TaskUser -..->|start form| SF
    TaskUser2 -..->|start form| SF

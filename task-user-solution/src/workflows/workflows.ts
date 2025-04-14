@@ -12,6 +12,7 @@ import {
 } from "../types/context";
 import type * as activities from "../activities";
 import * as signals from "../signals";
+import { tibcoSignal } from "../signals/tibcoSignal";
 
 const {
   StartEvent,
@@ -55,14 +56,14 @@ export async function MainFlowTaskUser(
   let nextActivity: StateMachineActivities = StateMachineActivities.TaskUser;
   while (nextActivity !== StateMachineActivities.exit) {
     switch (nextActivity) {
-      case StateMachineActivities.TaskUser: // TODO Form without timeout
-        // TODO: Signal catcher with form data.
+      case StateMachineActivities.TaskUser:
+        // Signal catcher with form data.
         let formDataReceivedTaskUser = false;
 
-        // TODO: Send start form.
+        // Send start form.
         ctx = await TaskUser(ctx);
 
-        // TODO Handle form data signal
+        // Handle form data signal
         setHandler(
           signals.formDataTaskUser,
           (inputTaskUser: Record<string, any>) => {
@@ -76,18 +77,18 @@ export async function MainFlowTaskUser(
         nextActivity = StateMachineActivities.TaskUser2;
         break;
       case StateMachineActivities.TaskUser2:
-        ctx._generated.__TimerDuration = 15000; // TODO Normally this would be a method.
+        ctx._generated.__TimerDuration = 15000; // Normally this would be a method.
 
-        // TODO Define if cancellation is caught.
+        // Define if cancellation is caught.
         let timerDoneTaskUser2 = false;
 
-        // TODO: Signal catcher with form data.
+        // Signal catcher with form data.
         let formDataReceivedTaskUser2 = false;
 
-        // TODO: Send start form.
+        // Send start form.
         ctx = await TaskUser2(ctx);
 
-        // TODO define cancellation.
+        // define cancellation.
         const timerTaskUser2CancellationScope = new CancellationScope();
         const timerTaskUser2CancellationScopePromise =
           timerTaskUser2CancellationScope.run(() => Timer(ctx));
@@ -100,38 +101,50 @@ export async function MainFlowTaskUser(
           }
         });
 
-        // TODO Handle form data signal
+        // Handle form data signal
         setHandler(
           signals.formDataTaskUser2,
           (inputTaskUser2: Record<string, any>) => {
             formDataReceivedTaskUser2 = true;
-            ctx._generated.formDataTaskUser2 = inputTaskUser2;
+            ctx._generated.formDataTaskUser2 = inputTaskUser2; //  TODO should be mapped
             timerTaskUser2CancellationScope.cancel();
           },
         );
 
-        await condition(() => formDataReceivedTaskUser2 || timerDoneTaskUser2);
+        // Tibco signal catcher. Comes from global signal catcher child flow.
+        let tibcoSignalReceived = false;
+        setHandler(signals.tibcoSignal, () => {
+          tibcoSignalReceived = true;
+          ctx._generated.tibcoSignalReceived = true;
+          timerTaskUser2CancellationScope.cancel();
+        });
+
+        await condition(() =>
+          formDataReceivedTaskUser2 || timerDoneTaskUser2 || tibcoSignalReceived
+        );
 
         if (formDataReceivedTaskUser2) {
           nextActivity = StateMachineActivities.TaskUser3;
+        } else if (tibcoSignalReceived) {
+          nextActivity = StateMachineActivities.EndEvent2;
         } else if (timerDoneTaskUser2) {
           nextActivity = StateMachineActivities.EndEvent2;
         }
         break;
       case StateMachineActivities.TaskUser3:
-        ctx._generated.__TimerDuration1 = 15000; // TODO Normally this would be a method.
-        ctx._generated.__TimerDuration2 = 25000; // TODO Normally this would be a method.
-        ctx._generated.__TimerDuration3 = 35000; // TODO Normally this would be a method.
+        ctx._generated.__TimerDuration1 = 15000; // Normally this would be a method.
+        ctx._generated.__TimerDuration2 = 25000; // Normally this would be a method.
+        ctx._generated.__TimerDuration3 = 35000; // Normally this would be a method.
         ctx._generated.__deadlineScopeExpired = false;
 
         const timerScope1 = new CancellationScope();
         const timerScope2 = new CancellationScope();
         const deadlineTimerScope = new CancellationScope();
 
-        // TODO Define if cancellation is caught.
+        // Define if cancellation is caught.
         let timerDoneTaskUser3 = false;
 
-        // TODO: Send start form.
+        // Send start form.
         ctx = await TaskUser3(ctx);
 
         const timer1Promise = timerScope1.run(() => Timer1(ctx));
@@ -139,7 +152,7 @@ export async function MainFlowTaskUser(
         const deadlineTimerPromise = deadlineTimerScope.run(() => Timer3(ctx));
 
         timer1Promise.then(() => {
-          console.log("Timer1 has finished."); // TODO Normally this could trigger an child flow.
+          console.log("Timer1 has finished."); // Normally this could trigger a child flow.
         }).catch((err) => {
           if (!isCancellation(err)) {
             throw err;
@@ -147,7 +160,7 @@ export async function MainFlowTaskUser(
         });
 
         timer2Promise.then(() => {
-          console.log("Timer2 has finished."); // TODO Normally this could trigger an child flow.
+          console.log("Timer2 has finished."); // Normally this could trigger a child flow.
         }).catch((err) => {
           if (!isCancellation(err)) {
             throw err;
@@ -164,7 +177,7 @@ export async function MainFlowTaskUser(
           }
         });
 
-        // TODO: Signal catcher with form data.
+        // Signal catcher with form data.
         let formDataReceivedTaskUser3 = false;
 
         setHandler(
