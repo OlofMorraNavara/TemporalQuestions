@@ -1,6 +1,6 @@
 export { StartEvent } from "./MainFlowTaskUser/StartEvent";
+export { StartPageFlow } from "./MainFlowTaskUser/StartPageFlow";
 export { TaskUser } from "./MainFlowTaskUser/TaskUser";
-
 export { TaskUser2 } from "./MainFlowTaskUser/TaskUser2";
 export { Timer } from "./MainFlowTaskUser/Timer";
 
@@ -12,3 +12,9 @@ export { Timer3 } from "./MainFlowTaskUser/Timer3";
 export { LocalSignal } from "./MainFlowTaskUser/LocalSignal";
 export { EndEvent } from "./MainFlowTaskUser/EndEvent";
 export { EndEvent2 } from "./MainFlowTaskUser/EndEvent2";
+
+// Pageflow:
+export { StartEventPageFlow } from "./PageFlow/StartEventPageFlow";
+export { TaskUserPageFlow } from "./PageFlow/TaskUserPageFlow";
+export { EndEventPageFlow } from "./PageFlow/EndEventPageFlow";
+

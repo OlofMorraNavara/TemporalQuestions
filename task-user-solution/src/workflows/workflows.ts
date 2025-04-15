@@ -1,6 +1,6 @@
 import {
   CancellationScope,
-  condition,
+  condition, executeChild,
   isCancellation,
   proxyActivities,
   setHandler,
@@ -12,10 +12,11 @@ import {
 } from "../types/context";
 import type * as activities from "../activities";
 import * as signals from "../signals";
-import { tibcoSignal } from "../signals/tibcoSignal";
+import { PageFlow } from "./index";
 
 const {
   StartEvent,
+  StartPageFlow,
   TaskUser,
   TaskUser2,
   TaskUser3,
@@ -45,6 +46,7 @@ export async function MainFlowTaskUser(
   ctx = await StartEvent(ctx);
 
   enum StateMachineActivities {
+    StartPageFlow = "StartPageFlow",
     TaskUser = "TaskUser",
     TaskUser2 = "TaskUser2",
     TaskUser3 = "TaskUser3",
@@ -53,9 +55,20 @@ export async function MainFlowTaskUser(
     exit = "exit",
   }
 
-  let nextActivity: StateMachineActivities = StateMachineActivities.TaskUser;
+  let nextActivity: StateMachineActivities = StateMachineActivities.StartPageFlow;
   while (nextActivity !== StateMachineActivities.exit) {
     switch (nextActivity) {
+      case StateMachineActivities.StartPageFlow:
+
+        ctx = await executeChild(PageFlow, {
+          args: [ctx],
+          retry: {
+            maximumAttempts: 1,
+          }
+        }) as WorkflowContext;
+
+        nextActivity = StateMachineActivities.TaskUser;
+        break;
       case StateMachineActivities.TaskUser:
         // Signal catcher with form data.
         let formDataReceivedTaskUser = false;
@@ -100,6 +113,16 @@ export async function MainFlowTaskUser(
             throw err;
           }
         });
+
+
+        setHandler(
+            signals.formDataTaskUser2, //defineSignal<[Record<string, any>]>('formDataTaskUser'
+            (inputTaskUser2: Record<string, any>) => {
+              formDataReceivedTaskUser2 = true;
+              ctx._generated.formDataTaskUser2 = inputTaskUser2; //  TODO should be mapped
+              timerTaskUser2CancellationScope.cancel();
+            },
+        );
 
         // Handle form data signal
         setHandler(
