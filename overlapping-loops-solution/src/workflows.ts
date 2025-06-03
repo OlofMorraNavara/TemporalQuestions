@@ -21,6 +21,7 @@ export async function loopingWorkflow(input: WorkflowInput): Promise<WorkflowOut
     ...input
   }
 
+  return await gotA();
   ctx = await A(ctx);
   ctx = await executeChild(childWorkflow, { workflowId: 'childLoop', args: [ctx] });
   ctx = await D(ctx);
