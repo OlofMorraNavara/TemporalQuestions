@@ -1,112 +1,122 @@
 import {
-    EncodingType,
-    METADATA_ENCODING_KEY,
-    PayloadConverterWithEncoding,
-    CompositePayloadConverter,
-    UndefinedPayloadConverter,
-} from '@temporalio/common';
-import { Payload } from '@temporalio/client';
-import { decode, encode } from '@temporalio/common/lib/encoding';
-import { TibcoList } from './types/tibco/TibcoList';
-import { TibcoDate, TibcoDateTime, TibcoDateTimetz, TibcoDuration, TibcoTime } from './types/tibco/types';
+  CompositePayloadConverter,
+  EncodingType,
+  METADATA_ENCODING_KEY,
+  PayloadConverterWithEncoding,
+  UndefinedPayloadConverter,
+} from "@temporalio/common";
+import { Payload } from "@temporalio/client";
+import { decode, encode } from "@temporalio/common/lib/encoding";
+import { TibcoList } from "./types/tibco/TibcoList";
+import {
+  TibcoDate,
+  TibcoDateTime,
+  TibcoDateTimetz,
+  TibcoDuration,
+  TibcoTime,
+} from "./types/tibco/types";
+import { DateTime, Duration } from "luxon";
 
 export class TibcoPayloadConverter implements PayloadConverterWithEncoding {
-    public encodingType = 'json/plain' as EncodingType;
+  public encodingType = "json/plain" as EncodingType;
 
-    fromPayload<T>(payload: Payload): T {
-        let result = JSON.parse(decode(payload.data));
-        return this.replaceObjectsByTibcoTypes(result);
-    }
+  fromPayload<T>(payload: Payload): T {
+    let result = JSON.parse(decode(payload.data));
+    return this.replaceObjectsByTibcoTypes(result);
+  }
 
-    toPayload<T>(value: T): Payload {
-        return {
-            metadata: {
-                [METADATA_ENCODING_KEY]: encode('json/plain'),
-            },
-            data: encode(JSON.stringify(value)),
-        };
-    }
+  toPayload<T>(value: T): Payload {
+    return {
+      metadata: {
+        [METADATA_ENCODING_KEY]: encode("json/plain"),
+      },
+      data: encode(JSON.stringify(value)),
+    };
+  }
 
-    private replaceObjectsByTibcoTypes<T>(obj: T): T {
-        function traverse(current: any, parentKey: string = ''): T | object {
-            for (const key in current) {
-                // eslint-disable-next-line no-prototype-builtins
-                if (current.hasOwnProperty(key)) {
-                    const value = current[key];
-                    if (
-                        value &&
-                        typeof value === 'object' &&
-                        !Array.isArray(value) &&
-                        // eslint-disable-next-line no-prototype-builtins
-                        value.hasOwnProperty('_internalType')
-                    ) {
-                        switch (value._internalType) {
-                            case TibcoList.name:
-                                current[key] = new TibcoList(
-                                    value._items.map((v) => {
-                                        return traverse(v, key);
-                                    })
-                                );
-                                break;
-                            case TibcoDate.name:
-                                current[key] = new TibcoDate(value._date.year, value._date.month, value._date.day);
-                                break;
-                            case TibcoDateTime.name:
-                                current[key] = new TibcoDateTime(
-                                    value._dateTime.year,
-                                    value._dateTime.month,
-                                    value._dateTime.day,
-                                    value._dateTime.hour,
-                                    value._dateTime.minute,
-                                    value._dateTime.second,
-                                    value._dateTime.millisecond
-                                );
-                                break;
-                            case TibcoDateTimetz.name:
-                                current[key] = new TibcoDateTimetz(
-                                    value._dateTime.year,
-                                    value._dateTime.month,
-                                    value._dateTime.day,
-                                    value._dateTime.hour,
-                                    value._dateTime.minute,
-                                    value._dateTime.second,
-                                    value._dateTime.millisecond
-                                );
-                                break;
-                            case TibcoDuration.name:
-                                current[key] = new TibcoDuration(
-                                    value._duration.years,
-                                    value._duration.months,
-                                    value._duration.days,
-                                    value._duration.hours,
-                                    value._duration.minutes,
-                                    value._duration.seconds,
-                                    value._duration.milliseconds
-                                );
-                                break;
-                            case TibcoTime.name:
-                                current[key] = new TibcoTime(
-                                    value._time.hour,
-                                    value._time.minute,
-                                    value._time.second,
-                                    value._time.millisecond
-                                );
-                                break;
-                        }
-                    } else if (value && typeof value === 'object' && !Array.isArray(value)) {
-                        current[key] = traverse(value, key);
-                    }
-                }
-            }
-            return current;
+  private replaceObjectsByTibcoTypes<T>(obj: T): T {
+    function convertToTibcoType(value: any): any {
+      if (
+        value && typeof value === "object" &&
+        !Array.isArray(value) &&
+        // eslint-disable-next-line no-prototype-builtins
+        value.hasOwnProperty("_internalType")
+      ) {
+        switch (value._internalType) {
+          case TibcoList.name:
+            return new TibcoList(
+              value._items.map((v) => traverse(v)),
+            );
+          case TibcoDate.name:
+            return new TibcoDate(
+              value._date.year,
+              value._date.month,
+              value._date.day,
+            );
+          case TibcoDateTime.name:
+            return new TibcoDateTime(
+              value._dateTime.year,
+              value._dateTime.month,
+              value._dateTime.day,
+              value._dateTime.hour,
+              value._dateTime.minute,
+              value._dateTime.second,
+              value._dateTime.millisecond,
+            );
+          case TibcoDateTimetz.name:
+            return new TibcoDateTimetz(
+              value._dateTime.year,
+              value._dateTime.month,
+              value._dateTime.day,
+              value._dateTime.hour,
+              value._dateTime.minute,
+              value._dateTime.second,
+              value._dateTime.millisecond,
+            );
+          case TibcoDuration.name:
+            const duration = Duration.fromISO(value._duration);
+            return new TibcoDuration(
+              duration.years,
+              duration.months,
+              duration.days,
+              duration.hours,
+              duration.minutes,
+              duration.seconds,
+              duration.milliseconds,
+            );
+          case TibcoTime.name:
+            return new TibcoTime(
+              value._time.hour,
+              value._time.minute,
+              value._time.second,
+              value._time.millisecond,
+            );
         }
-
-        traverse(obj);
-        return obj;
+      }
+      return value;
     }
+
+    function traverse(current: any): any {
+      if (Array.isArray(current)) {
+        return current.map(traverse);
+      } else if (current && typeof current === "object") {
+        const converted = convertToTibcoType(current);
+        if (converted != current) {
+          return converted;
+        }
+        for (const key in current) {
+          if (current.hasOwnProperty(key)) {
+            current[key] = traverse(current[key]);
+          }
+        }
+      }
+      return current;
+    }
+    return traverse(obj);
+  }
 }
 
 export const payloadConverter = new CompositePayloadConverter(
-    new UndefinedPayloadConverter(),
-    new TibcoPayloadConverter()
+  new UndefinedPayloadConverter(),
+  new TibcoPayloadConverter(),
 );
