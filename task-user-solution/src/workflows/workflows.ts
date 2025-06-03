@@ -117,20 +117,6 @@ export async function MainFlowTaskUser(
             },
         );
 
-      // {
-      //   "Param2": "any",
-      //   "Param3": "any",
-      //   "Param4" : {
-      //     "Param5": 1
-      //   }
-      // }
-      // {
-      //   "Param3": "any",
-      //   "Param4" : {
-      //     "Param5": 1
-      //   }
-      // }
-
         setHandler(
             defineSignal('cancelTaskUserSignal'),
             async () => {
@@ -142,193 +128,164 @@ export async function MainFlowTaskUser(
 
         await condition(() => formDataReceivedTaskUserSignal || cancelReceivedTaskUserSignal);
 
-        nextActivity = StateMachineActivities.EndEvent;
+        nextActivity = StateMachineActivities.TaskUser;
         break;
-      // case StateMachineActivities.StartPageFlow:
-      //
-      //   const testCancellationScope = new CancellationScope();
-      //   testCancellationScope.run(async () => {
-      //     ctx = await executeChild(PageFlow, {
-      //       args: [ctx],
-      //       retry: {
-      //         maximumAttempts: 1,
-      //       }
-      //     }) as WorkflowContext;
-      //   }).catch((err) => {
-      //       if (!isCancellation(err)) {
-      //           throw err;
-      //       }
-      //   })
-      //
-      //   let testCancellationScopeReceived = false;
-      //   setHandler(
-      //       defineSignal('testCancellationScopeChildFlow'),
-      //       () => {
-      //         testCancellationScope.cancel();
-      //       },
-      //   );
-      //
-      //   await condition(() => testCancellationScopeReceived);
-      //
-      //
-      //   nextActivity = StateMachineActivities.TaskUser;
-      //   break;
-      // case StateMachineActivities.TaskUser:
-      //   // Signal catcher with form data.
-      //   let formDataReceivedTaskUser = false;
-      //
-      //   // Send start form.
-      //   ctx = await TaskUser(ctx);
-      //
-      //   // Handle form data signal
-      //   setHandler(
-      //     signals.formDataTaskUser,
-      //     (inputTaskUser: Record<string, any>) => {
-      //       formDataReceivedTaskUser = true;
-      //       ctx._generated.formDataTaskUser = inputTaskUser;
-      //     },
-      //   );
-      //
-      //   await condition(() => formDataReceivedTaskUser);
-      //
-      //   nextActivity = StateMachineActivities.TaskUser2;
-      //   break;
-      // case StateMachineActivities.TaskUser2:
-      //   ctx._generated.__TimerDuration = 15000; // Normally this would be a method.
-      //
-      //   // Define if cancellation is caught.
-      //   let timerDoneTaskUser2 = false;
-      //
-      //   // Signal catcher with form data.
-      //   let formDataReceivedTaskUser2 = false;
-      //
-      //   // Send start form.
-      //   ctx = await TaskUser2(ctx);
-      //
-      //   // define cancellation.
-      //   const timerTaskUser2CancellationScope = new CancellationScope();
-      //   const timerTaskUser2CancellationScopePromise =
-      //     timerTaskUser2CancellationScope.run(() => Timer(ctx));
-      //   timerTaskUser2CancellationScopePromise.then(() => {
-      //     timerDoneTaskUser2 = true;
-      //     // TODO: Send cancellation request to the form application.
-      //   }).catch((err) => {
-      //     if (!isCancellation(err)) {
-      //       throw err;
-      //     }
-      //   });
-      //
-      //
-      //   setHandler(
-      //       signals.formDataTaskUser2, //defineSignal<[Record<string, any>]>('formDataTaskUser'
-      //       (inputTaskUser2: Record<string, any>) => {
-      //         formDataReceivedTaskUser2 = true;
-      //         ctx._generated.formDataTaskUser2 = inputTaskUser2; //  TODO should be mapped
-      //         timerTaskUser2CancellationScope.cancel();
-      //       },
-      //   );
-      //
-      //   // Handle form data signal
-      //   setHandler(
-      //     signals.formDataTaskUser2,
-      //     (inputTaskUser2: Record<string, any>) => {
-      //       formDataReceivedTaskUser2 = true;
-      //       ctx._generated.formDataTaskUser2 = inputTaskUser2; //  TODO should be mapped
-      //       timerTaskUser2CancellationScope.cancel();
-      //     },
-      //   );
-      //
-      //   // Tibco signal catcher. Comes from global signal catcher child flow.
-      //   let tibcoSignalReceived = false;
-      //   setHandler(signals.tibcoSignal, () => {
-      //     tibcoSignalReceived = true;
-      //     ctx._generated.tibcoSignalReceived = true;
-      //     timerTaskUser2CancellationScope.cancel();
-      //   });
-      //
-      //   await condition(() =>
-      //     formDataReceivedTaskUser2 || timerDoneTaskUser2 || tibcoSignalReceived
-      //   );
-      //
-      //   if (formDataReceivedTaskUser2) {
-      //     nextActivity = StateMachineActivities.TaskUser3;
-      //   } else if (tibcoSignalReceived) {
-      //     nextActivity = StateMachineActivities.EndEvent2;
-      //   } else if (timerDoneTaskUser2) {
-      //     nextActivity = StateMachineActivities.EndEvent2;
-      //   }
-      //   break;
-      // case StateMachineActivities.TaskUser3:
-      //   const timerDuration1 = await determineTimerDuration1(ctx);
-      //   const timerDuration2 = await determineTimerDuration2(ctx);
-      //   const timerDuration3 = await determineTimerDuration3(ctx);
-      //   ctx._generated.__deadlineScopeExpired = false;
-      //
-      //   const timerScope1 = new CancellationScope();
-      //   const timerScope2 = new CancellationScope();
-      //   const deadlineTimerScope = new CancellationScope();
-      //
-      //   // Send start form.
-      //   ctx = await TaskUser3(ctx);
-      //
-      //   const timer1Promise = timerScope1.run(async () => {
-      //     // await init1(); // TODO init script
-      //     await sleep(timerDuration1.getMilliseconds());
-      //     // await completed1(); // TODO completed script
-      //   }).catch((err) => {
-      //     if (!isCancellation(err)) {
-      //       throw err;
-      //     }
-      //   });
-      //
-      //   const timer2Promise = timerScope2.run(async () => {
-      //     // await init2(); // TODO init script
-      //     await sleep(timerDuration2.getMilliseconds());
-      //     // await completed2(); // TODO completed script
-      //   }).catch((err) => {
-      //     if (!isCancellation(err)) {
-      //       throw err;
-      //     }
-      //   });
-      //
-      //   const deadlineTimerPromise = deadlineTimerScope.run(async () => {
-      //     // init3(); // TODO init script
-      //     await sleep(timerDuration3.getMilliseconds());
-      //     // completed3(); // TODO completed script
-      //     ctx._generated.timerDoneTaskUser3 = true; // TODO: Check of deze nog gezet wordt
-      //     // TODO: Send cancellation request to the form application.
-      //     timerScope1.cancel();
-      //     timerScope2.cancel();
-      //   }).catch((err) => {
-      //     if (!isCancellation(err)) {
-      //       throw err;
-      //     }
-      //   });
-      //
-      //   // Signal catcher with form data.
-      //   let formDataReceivedTaskUser3 = false;
-      //
-      //   setHandler(
-      //     signals.formDataTaskUser3,
-      //     (inputTaskUser3: Record<string, any>) => {
-      //       formDataReceivedTaskUser3 = true;
-      //       ctx._generated.formDataTaskUser3 = inputTaskUser3;
-      //       timerScope1.cancel();
-      //       timerScope2.cancel();
-      //       deadlineTimerScope.cancel();
-      //     },
-      //   );
-      //
-      //   await condition(() =>
-      //     formDataReceivedTaskUser3 || ctx._generated.timerDoneTaskUser3
-      //   );
-      //
-      //   if (formDataReceivedTaskUser3) {
-      //     nextActivity = StateMachineActivities.EndEvent;
-      //   } else if (ctx._generated.timerDoneTaskUser3) {
-      //     nextActivity = StateMachineActivities.EndEvent2;
-      //   }
-      //   break;
+      case StateMachineActivities.TaskUser:
+        // Signal catcher with form data.
+        let formDataReceivedTaskUser = false;
+
+        // Send start form.
+        ctx = await TaskUser(ctx);
+
+        // Handle form data signal
+        setHandler(
+          signals.formDataTaskUser,
+          (inputTaskUser: Record<string, any>) => {
+            formDataReceivedTaskUser = true;
+            ctx._generated.formDataTaskUser = inputTaskUser;
+          },
+        );
+
+        await condition(() => formDataReceivedTaskUser);
+
+        nextActivity = StateMachineActivities.TaskUser2;
+        break;
+      case StateMachineActivities.TaskUser2:
+        ctx._generated.__TimerDuration = 15000; // Normally this would be a method.
+
+        // Define if cancellation is caught.
+        let timerDoneTaskUser2 = false;
+
+        // Signal catcher with form data.
+        let formDataReceivedTaskUser2 = false;
+
+        // Send start form.
+        ctx = await TaskUser2(ctx);
+
+        // define cancellation.
+        const timerTaskUser2CancellationScope = new CancellationScope();
+        const timerTaskUser2CancellationScopePromise =
+          timerTaskUser2CancellationScope.run(() => Timer(ctx));
+        timerTaskUser2CancellationScopePromise.then(() => {
+          timerDoneTaskUser2 = true;
+          // TODO: Send cancellation request to the form application.
+        }).catch((err) => {
+          if (!isCancellation(err)) {
+            throw err;
+          }
+        });
+
+
+        setHandler(
+            signals.formDataTaskUser2, //defineSignal<[Record<string, any>]>('formDataTaskUser'
+            (inputTaskUser2: Record<string, any>) => {
+              formDataReceivedTaskUser2 = true;
+              ctx._generated.formDataTaskUser2 = inputTaskUser2; //  TODO should be mapped
+              timerTaskUser2CancellationScope.cancel();
+            },
+        );
+
+        // Handle form data signal
+        setHandler(
+          signals.formDataTaskUser2,
+          (inputTaskUser2: Record<string, any>) => {
+            formDataReceivedTaskUser2 = true;
+            ctx._generated.formDataTaskUser2 = inputTaskUser2; //  TODO should be mapped
+            timerTaskUser2CancellationScope.cancel();
+          },
+        );
+
+        // Tibco signal catcher. Comes from global signal catcher child flow.
+        let tibcoSignalReceived = false;
+        setHandler(signals.tibcoSignal, () => {
+          tibcoSignalReceived = true;
+          ctx._generated.tibcoSignalReceived = true;
+          timerTaskUser2CancellationScope.cancel();
+        });
+
+        await condition(() =>
+          formDataReceivedTaskUser2 || timerDoneTaskUser2 || tibcoSignalReceived
+        );
+
+        if (formDataReceivedTaskUser2) {
+          nextActivity = StateMachineActivities.TaskUser3;
+        } else if (tibcoSignalReceived) {
+          nextActivity = StateMachineActivities.EndEvent2;
+        } else if (timerDoneTaskUser2) {
+          nextActivity = StateMachineActivities.EndEvent2;
+        }
+        break;
+      case StateMachineActivities.TaskUser3:
+        const timerDuration1 = await determineTimerDuration1(ctx);
+        const timerDuration2 = await determineTimerDuration2(ctx);
+        const timerDuration3 = await determineTimerDuration3(ctx);
+        ctx._generated.__deadlineScopeExpired = false;
+
+        const timerScope1 = new CancellationScope();
+        const timerScope2 = new CancellationScope();
+        const deadlineTimerScope = new CancellationScope();
+
+        // Send start form.
+        ctx = await TaskUser3(ctx);
+
+        const timer1Promise = timerScope1.run(async () => {
+          // await init1(); // TODO init script
+          await sleep(timerDuration1.getMilliseconds());
+          // await completed1(); // TODO completed script
+        }).catch((err) => {
+          if (!isCancellation(err)) {
+            throw err;
+          }
+        });
+
+        const timer2Promise = timerScope2.run(async () => {
+          // await init2(); // TODO init script
+          await sleep(timerDuration2.getMilliseconds());
+          // await completed2(); // TODO completed script
+        }).catch((err) => {
+          if (!isCancellation(err)) {
+            throw err;
+          }
+        });
+
+        const deadlineTimerPromise = deadlineTimerScope.run(async () => {
+          // init3(); // TODO init script
+          await sleep(timerDuration3.getMilliseconds());
+          // completed3(); // TODO completed script
+          ctx._generated.timerDoneTaskUser3 = true; // TODO: Check of deze nog gezet wordt
+          // TODO: Send cancellation request to the form application.
+          timerScope1.cancel();
+          timerScope2.cancel();
+        }).catch((err) => {
+          if (!isCancellation(err)) {
+            throw err;
+          }
+        });
+
+        // Signal catcher with form data.
+        let formDataReceivedTaskUser3 = false;
+
+        setHandler(
+          signals.formDataTaskUser3,
+          (inputTaskUser3: Record<string, any>) => {
+            formDataReceivedTaskUser3 = true;
+            ctx._generated.formDataTaskUser3 = inputTaskUser3;
+            timerScope1.cancel();
+            timerScope2.cancel();
+            deadlineTimerScope.cancel();
+          },
+        );
+
+        await condition(() =>
+          formDataReceivedTaskUser3 || ctx._generated.timerDoneTaskUser3
+        );
+
+        if (formDataReceivedTaskUser3) {
+          nextActivity = StateMachineActivities.EndEvent;
+        } else if (ctx._generated.timerDoneTaskUser3) {
+          nextActivity = StateMachineActivities.EndEvent2;
+        }
+        break;
       case StateMachineActivities.EndEvent:
         ctx = await EndEvent(ctx);
         nextActivity = StateMachineActivities.exit;
