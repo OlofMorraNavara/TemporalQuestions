@@ -1,4 +1,5 @@
 export { StartEvent } from "./MainFlowTaskUser/StartEvent";
+export { TaskUserSignal } from "./MainFlowTaskUser/TaskUserSignal";
 export { StartPageFlow } from "./MainFlowTaskUser/StartPageFlow";
 export { TaskUser } from "./MainFlowTaskUser/TaskUser";
 export { TaskUser2 } from "./MainFlowTaskUser/TaskUser2";
@@ -17,4 +18,3 @@ export { EndEvent2 } from "./MainFlowTaskUser/EndEvent2";
 export { StartEventPageFlow } from "./PageFlow/StartEventPageFlow";
 export { TaskUserPageFlow } from "./PageFlow/TaskUserPageFlow";
 export { EndEventPageFlow } from "./PageFlow/EndEventPageFlow";
-

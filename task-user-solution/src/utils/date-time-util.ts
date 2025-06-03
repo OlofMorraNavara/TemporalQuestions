@@ -226,4 +226,17 @@ export class DateTimeUtil {
 
     throw new Error("Invalid arguments");
   }
+
+  public static toDuration(
+    timer: TibcoDuration | TibcoDateTime,
+  ): TibcoDuration {
+    if (timer instanceof TibcoDuration) {
+      return timer;
+    }
+
+    const now = TibcoDateTime.now();
+    const durationMillis = timer.getMillisecond() - now.getMillisecond();
+
+    return DateTimeUtil.createDuration(durationMillis);
+  }
 }

@@ -30,4 +30,21 @@ export class TibcoDuration {
   public getDuration(): Duration {
     return this._duration;
   }
+
+  public getMilliseconds(): number {
+    return this._duration.as("milliseconds");
+  }
+
+  static reviveTibcoDuration(durationObject: any): TibcoDuration {
+    const duration = Duration.fromISO(durationObject._duration);
+    return new TibcoDuration(
+      duration.years ?? 0,
+      duration.months ?? 0,
+      duration.days ?? 0,
+      duration.hours ?? 0,
+      duration.minutes ?? 0,
+      duration.seconds ?? 0,
+      duration.milliseconds ?? 0,
+    );
+  }
 }

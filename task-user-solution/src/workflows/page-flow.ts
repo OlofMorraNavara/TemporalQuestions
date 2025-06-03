@@ -1,4 +1,10 @@
-import {condition, proxyActivities, setHandler, sleep, workflowInfo} from "@temporalio/workflow";
+import {
+  condition,
+  proxyActivities,
+  setHandler,
+  sleep,
+  workflowInfo,
+} from "@temporalio/workflow";
 import {
   WorkflowContext,
   WorkflowInput,
@@ -7,12 +13,13 @@ import {
 import type * as activities from "../activities";
 import * as signals from "../signals";
 
-const { StartEventPageFlow, TaskUserPageFlow, EndEventPageFlow } = proxyActivities<typeof activities>({
-  startToCloseTimeout: "1 minute",
-  retry: {
-    maximumAttempts: 3,
-  },
-});
+const { StartEventPageFlow, TaskUserPageFlow, EndEventPageFlow } =
+  proxyActivities<typeof activities>({
+    startToCloseTimeout: "1 minute",
+    retry: {
+      maximumAttempts: 3,
+    },
+  });
 
 export async function PageFlow(
   input: WorkflowInput,
@@ -29,11 +36,11 @@ export async function PageFlow(
   // Signal catcher with form data.
   let formDataReceivedTaskUserPageFlow = false;
   setHandler(
-      signals.formDataTaskUserPageFlow,
-      (inputTaskUserPageFlow: Record<string, any>) => {
-        formDataReceivedTaskUserPageFlow = true;
-        ctx._generated.formDataTaskUserPageFlow = inputTaskUserPageFlow;
-      },
+    signals.formDataTaskUserPageFlow,
+    (inputTaskUserPageFlow: Record<string, any>) => {
+      formDataReceivedTaskUserPageFlow = true;
+      ctx._generated.formDataTaskUserPageFlow = inputTaskUserPageFlow;
+    },
   );
 
   await condition(() => formDataReceivedTaskUserPageFlow);

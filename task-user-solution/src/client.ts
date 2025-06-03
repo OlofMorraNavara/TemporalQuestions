@@ -2,6 +2,7 @@ import { Client, Connection } from "@temporalio/client";
 import { MainFlowTaskUser } from "./workflows";
 import { nanoid } from "nanoid";
 import { WorkflowInput, WorkflowOutput } from "./types/context";
+import {uuid4} from "@temporalio/workflow";
 
 async function run(input: WorkflowInput): Promise<WorkflowOutput> {
   // Connect to the default Server location
@@ -21,7 +22,7 @@ async function run(input: WorkflowInput): Promise<WorkflowOutput> {
   });
 
   // Construct workflow ID, and add to the input.
-  const workflowId = "task-user-solution-" + nanoid();
+  const workflowId = "task-user-solution-" + uuid4();
   input._generated.mainParentProcessWorkflowId = workflowId;
 
   const handle = await client.workflow.start(MainFlowTaskUser, {
