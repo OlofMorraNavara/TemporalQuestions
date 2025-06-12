@@ -1,6 +1,6 @@
 import { WorkflowContext } from '../types/context';
-import {heartbeat, sleep} from "@temporalio/activity";
-import {CancelledFailure} from "@temporalio/client";
+import { heartbeat, sleep } from '@temporalio/activity';
+import { CancelledFailure } from '@temporalio/client';
 
 export function createActivity({
     inputDataMapper,
@@ -21,7 +21,7 @@ export function createActivity({
         try {
             await Promise.race([
                 (async () => {
-                    while(true) {
+                    while (true) {
                         await sleep(10);
                         heartbeat();
                     }
@@ -36,11 +36,10 @@ export function createActivity({
                         ctx = await outputDataMapper(ctx);
                     }
                     ctx = await completed(ctx);
-                })()
-            ])
-        }
-        catch (err) {
-            throw err
+                })(),
+            ]);
+        } catch (err) {
+            throw err;
         }
         return ctx;
     };

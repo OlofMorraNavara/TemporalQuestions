@@ -29,7 +29,6 @@ Each signal target activity sets a handler when the activity starts.
 When a signal is caught, the signal handler cancels the target activity’s cancellation scope.
 The target activity is canceled, and the workflow continues (possibly along a different workflow path).
 
-
 ```mermaid
 graph LR;
     Start --> TaskUser
