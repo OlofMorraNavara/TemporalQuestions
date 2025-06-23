@@ -38,11 +38,8 @@ export async function MainFlowRescheduleTimer(input: WorkflowInput): Promise<Wor
     const timerDurationTimer = await determineTimerDuration(ctx)
     let __deadlineScopeExpiredTimer = false;
 
-    console.log("First deadline duration expires at:", timerDurationTimer.getMilliseconds() ,DateTime.now().plus(timerDurationTimer.getMilliseconds()))
     const deadlineTimerScopeTimer = new CancellationScope();
-    const target = Date.now()  + timerDurationTimer.getMilliseconds()
-
-    const updatableTimer = new UpdatableTimer(target);
+    const updatableTimer = new UpdatableTimer(Date.now() + timerDurationTimer.getMilliseconds() / 1000);
     const deadlineTimerPromiseTimer = deadlineTimerScopeTimer
         .run(async () => {
             ctx._generated.firstExperation = DateTime.now().plus(timerDurationTimer.getMilliseconds());
@@ -66,9 +63,7 @@ export async function MainFlowRescheduleTimer(input: WorkflowInput): Promise<Wor
     // Timer reschedule signal handler. Is a signal activity.
     setHandler(signals.UpdateTimer, async () => {
         const newDuration = await determineRescheduleTimerDuration(ctx)
-        const newTarget = Date.now() + newDuration.getMilliseconds();
-        console.log("New deadline duration expires at:", newDuration.getMilliseconds(), DateTime.now().plus(newDuration.getMilliseconds()))
-        updatableTimer.deadline = newTarget;
+        updatableTimer.deadline = Date.now() + newDuration.getMilliseconds() / 1000;
     });
 
     await condition(() => __deadlineScopeExpiredTimer || formDataReceivedTaskUser);

@@ -7,9 +7,9 @@ async function determineTimerLengthTemp(ms: number) {
 }
 
 export async function determineTimerDuration(ctx: WorkflowContext) {
-    return determineTimerLengthTemp(15);
+    return determineTimerLengthTemp(15000);
 }
 
 export async function determineRescheduleTimerDuration(ctx: WorkflowContext) {
-  return determineTimerLengthTemp(15);
+  return determineTimerLengthTemp(15000);
 }
