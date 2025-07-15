@@ -2,14 +2,23 @@
   "extends": "@tsconfig/node18/tsconfig.json",
   "version": "5.6.3",
   "compilerOptions": {
-    "lib": ["es2021"],
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "baseUrl": ".",
+    "lib": ["es2023"],
+    "target": "ES2022",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
     "rootDir": "./",
     "outDir": "./build",
     "strict": false,
-    "types": ["jest"]
+    "types": ["jest"],
+    "paths": {
+      "@/libs/*": ["libs/*"],
+      "@integration/bpm-es": ["libs/entity-services/bpm/src/*"],
+      "@integration/temporal/workflow": ["libs/temporal/src/workflow/index.ts"]
+    }
   },
   "include": ["src/**/*.ts", "tests/**/*.ts"]
 }
