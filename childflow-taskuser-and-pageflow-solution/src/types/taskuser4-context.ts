@@ -4,7 +4,7 @@ export type WorkflowInput = {
 
 export type WorkflowOutput = {
     _generated: Record<string, any>;
-    pageFlowWorkflowTestParam?: string;
+    taskUser4TestParam?: string;
 };
 
 export type WorkflowContext = {

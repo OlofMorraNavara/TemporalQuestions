@@ -2,11 +2,12 @@ import {
 	proxyActivities,
 	defineSignal,
 	setHandler,
-	condition, uuid4, workflowInfo,
+	condition, uuid4, workflowInfo, getExternalWorkflowHandle,
 } from '@temporalio/workflow';
-import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../../types/context';
+import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../../types/taskuser4-context';
 import type * as activities from '../../activities';
 import * as formsApiHelpers from "../../utils/forms-api-helper";
+import {updateFormData} from "../../utils/forms-api-helper";
 
 const { TaskUser4 } = proxyActivities<typeof activities>({
 	startToCloseTimeout: '1 minute',
@@ -27,88 +28,73 @@ export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowC
 		...input,
 	};
 
-	// TODO Task user initiated script? Or execute this script in the parent workflow?
-
-	// TODO ScheduleScript
-
 	// Start task
 	const workflowId = workflowInfo().workflowId;
-	const taskId = 'task-TaskUser4-' + uuid4()
-	await startTask({
-		workflowId: workflowId,
-		signalNameBase: 'TaskUser4', // ACTIVITY_NAME = 'TaskUser4' + SIGNAL = 'TaskOpened'
-		taskId: taskId,
+
+	// Wait for form open signal
+	let taskOpenedReceived = false;
+	setHandler(defineSignal("TaskUser4TaskOpened"), () => {
+		taskOpenedReceived = true;
+	});
+	await condition(() => taskOpenedReceived);
+
+	// send HTTP request to the forms app to start form.
+	await startForm(
+		workflowId,
+		{
+			taskId: ctx._generated.taskIdTaskUser4,
+			signalNameBase: `TaskUser4` , // ACTIVITY_NAME = 'TaskUser4' + SIGNAL = 'Close/Submit/Cancel/Open'
+			formUri: 'string',
+			tibcoWorkflowId: 'string',
+			data: {
+				input: 'test'
+			},
+		});
+
+	// Wait for open signal from the forms app. Execute open Script.
+	let TaskUser4OpenReceived = false;
+	setHandler(defineSignal<any>("TaskUser4Open"), async (data: any) => {
+		// TODO Execute open script
+		await updateFormData(workflowId, {data}) // TODO pass the form data from the context using associated parameter mappings.
+		TaskUser4OpenReceived = true;
 	});
 
-	let formData: any;
+	await condition(() => TaskUser4OpenReceived);
 
-	while (true){
-		// Wait for form open signal
-		let taskOpenedReceived = false;
-		setHandler(defineSignal("TaskUser4TaskOpened"), () => {
-			taskOpenedReceived = true;
-		});
-		await condition(() => taskOpenedReceived);
+	// TODO Send updated data after openScript to the forms app. openForm()
 
-		// send HTTP request to the forms app to start form.
-		await startForm(
-			workflowId,
-			{
-				taskId: taskId,
-				signalNameBase: `TaskUser4` , // ACTIVITY_NAME = 'TaskUser4' + SIGNAL = 'Close/Submit/Cancel/Open'
-				formUri: 'string',
-				tibcoWorkflowId: 'string',
-				data: {
-					input: 'test'
-				},
-			});
+	// Wait for forms app to send signal when form is submitted/closed/cancelled.
+	let TaskUser4SubmittedReceived = false;
+	setHandler(defineSignal<any>("TaskUser4Submit"), (data: any) => {
+		// TODO SubmitScript
+		// TODO map data to workflow context.
+		TaskUser4SubmittedReceived = true;
+	});
 
-		// Wait for open signal from the forms app. Execute open Script.
-		let TaskUser4OpenReceived = false;
-		setHandler(defineSignal<any>("TaskUser4Open"), (data: any) => {
-			// TODO Execute open script
-			TaskUser4OpenReceived = true;
-		});
+	// TODO Should this be deleted and implemented on parent workflow level?? Send signals straight to parent workflow?
+	let TaskUser4CloseReceived = false;
+	setHandler(defineSignal<any>("TaskUser4Close"), async (data: any) => {
+		// TODO CloseScript
+		TaskUser4CloseReceived = true;
+		await updateFormData(workflowId, {data}) // TODO pass the form data from the context using associated parameter mappings.
+	});
 
-		await condition(() => TaskUser4OpenReceived);
+	// TODO Should this be deleted and implemented on parent workflow level?? Send signals straight to parent workflow?
+	let TaskUser4CancelReceived = false;
+	setHandler(defineSignal<any>("TaskUser4Cancel"), (data: any) => {
+		TaskUser4CancelReceived = true;
+	});
 
-		// TODO Send updated data after openScript to the forms app. openForm()
+	await condition(() => TaskUser4SubmittedReceived || TaskUser4CloseReceived || TaskUser4CancelReceived);
 
-		// Wait for forms app to send signal when form is submitted/closed/cancelled.
-		let TaskUser4SubmittedReceived = false;
-		setHandler(defineSignal<any>("TaskUser4Submit"), (data: any) => {
-			formData = data;
-			// TODO SubmitScript
-			TaskUser4SubmittedReceived = true;
-		});
-		let TaskUser4CloseReceived = false;
-		setHandler(defineSignal<any>("TaskUser4Close"), (data: any) => {
-			formData = data;
-			// TODO CloseScript
-			TaskUser4CloseReceived = true;
-			// TODO Send updated data after closeScript to the forms app. closeForm()
-		});
-		let TaskUser4CancelReceived = false;
-		setHandler(defineSignal<any>("TaskUser4Cancel"), (data: any) => {
-			formData = data;
-			TaskUser4CancelReceived = true;
-		});
-
-		await condition(() => TaskUser4SubmittedReceived || TaskUser4CloseReceived || TaskUser4CancelReceived);
-
-		if(TaskUser4SubmittedReceived){
-			break;
-		}
+	if(TaskUser4SubmittedReceived) {
+		// Get parent workflow handle to send signal to return workflow output.
+		const parentHandle = getExternalWorkflowHandle(workflowInfo().parent.workflowId);
+		await parentHandle.signal(defineSignal<[WorkflowOutput]>("TaskUser4Submit"), mapContextToOutput(ctx))
 	}
-
-	// TODO data mapping? Or return result (signal or normale return) and do the mapping in the parent workflow?
-
-	// Send task done to forms app.
-	await completeTask(taskId);
-
-	ctx._generated.formDataTaskUser4 = formData;
-
-	// TODO Task user completed script? Or execute this script in the parent workflow?
+	else{
+		// TODO What to do when task is closed?
+	}
 
 	return mapContextToOutput(ctx);
 }

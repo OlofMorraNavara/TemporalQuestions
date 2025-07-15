@@ -3,7 +3,7 @@ import {
 	defineSignal,
 	setHandler,
 	condition, uuid4,
-	WorkflowInfo, workflowInfo
+	WorkflowInfo, workflowInfo, getExternalWorkflowHandle
 } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../types/pageflow-context';
 import type * as activities from '../activities';
@@ -23,136 +23,147 @@ const { completeTask, startForm, startTask, updateFormData } = proxyActivities<t
 	},
 });
 
-export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowContext> {
-	let ctx: WorkflowContext = {
-		...input,
+export async function PageFlowWorkflow(input: WorkflowInput | WorkflowContext): Promise<WorkflowContext> {
+	let ctx: WorkflowContext;
+	ctx = {
+		...input
 	};
-
-	// TODO ScheduleScript
 
 	// Start task
 	const workflowId = workflowInfo().workflowId;
-	const taskId = 'task-pageflow-' + uuid4()
-	await startTask({
-		workflowId: '',
-		signalNameBase: 'pageFlowName', // PAGEFLOW_NAME = 'pageFlowName' + SIGNAL = 'TaskOpened'
-		taskId: taskId,
+
+	// Wait for form open signal
+	let taskOpenedReceived = false;
+	setHandler(defineSignal("PageFlowWorkflowTaskOpened"), () => {
+		taskOpenedReceived = true;
+	});
+	await condition(() => taskOpenedReceived);
+
+	// Optional execute activity
+	ctx = await StartEvent(ctx);
+
+	// Send HTTP request to the forms app to start form.
+	await startForm(
+		workflowId,
+		{
+			taskId: ctx._generated.taskId,
+			signalNameBase: 'TaskUser1', // ACTIVITY_NAME = 'TaskUser1' + SIGNAL = 'Close/Submit/Cancel/Open'
+			formUri: 'string',
+			tibcoWorkflowId: 'string',
+			data: {
+				input: 'test'
+			}
+		});
+
+	// Wait for open signal from the forms app. Execute open Script.
+	let TaskUser1OpenReceived = false;
+	setHandler(defineSignal<any>("TaskUser1Open"), (data: any) => {
+		// TODO Execute open script
+		TaskUser1OpenReceived = true;
 	});
 
-	let formData: any;
-	while(true){
-		ctx = await StartEvent(ctx);
+	await condition(() => TaskUser1OpenReceived);
 
-		// Wait for form open signal
-		let taskOpenedReceived = false;
-		setHandler(defineSignal("pageFlowNameTaskOpened"), () => {
-			taskOpenedReceived = true;
-		});
-		await condition(() => taskOpenedReceived);
+	// TODO Send updated data after openScript to the forms app. openForm()
 
-		// Send HTTP request to the forms app to start form.
-		await startForm(
-			workflowId,
-			{
-				taskId: taskId,
-				signalNameBase: 'TaskUser1', // ACTIVITY_NAME = 'TaskUser1' + SIGNAL = 'Close/Submit/Cancel/Open'
-				formUri: 'string',
-				tibcoWorkflowId: 'string',
-				data: {
-					input: 'test'
-				}
-			});
+	let TaskUser1SubmitReceived = false;
+	setHandler(defineSignal<any>("TaskUser1Submit"), (data: any) => {
+		// Do associated parameter mapping to context
+		TaskUser1SubmitReceived = true;
+	});
+	await condition(() => TaskUser1SubmitReceived);
 
-		// Wait for open signal from the forms app. Execute open Script.
-		let TaskUser1OpenReceived = false;
-		setHandler(defineSignal<any>("TaskUser1Open"), (data: any) => {
-			// TODO Execute open script
-			TaskUser1OpenReceived = true;
+	// TODO Optional: Execute activities
+
+	await startForm(
+		workflowId,
+		{
+			taskId: ctx._generated.taskId,
+			signalNameBase: 'TaskUser2', // ACTIVITY_NAME = 'TaskUser2' + SIGNAL = 'Close/Submit/Cancel/Open'
+			formUri: 'string',
+			tibcoWorkflowId: 'string',
+			data: {
+				input: 'test'
+			}
 		});
 
-		await condition(() => TaskUser1OpenReceived);
+	// Wait for open signal from the forms app. Execute open Script.
+	let TaskUser2OpenReceived = false;
+	setHandler(defineSignal<any>("TaskUser2Open"), (data: any) => {
+		// TODO Execute open script
+		TaskUser2OpenReceived = true;
+	});
 
-		// TODO Send updated data after openScript to the forms app. openForm()
+	await condition(() => TaskUser2OpenReceived);
 
-		let TaskUser1SubmitReceived = false;
-		setHandler(defineSignal<any>("TaskUser1Submit"), (data: any) => {
-			formData = data;
-			TaskUser1SubmitReceived = true;
-		});
-		let TaskUser1CancelReceived = false;
-		setHandler(defineSignal("TaskUser1Cancel"), () => {
-			TaskUser1CancelReceived = true;
-		});
-		let TaskUser1CloseReceived = false;
-		setHandler(defineSignal("TaskUser1Close"), () => {
-			TaskUser1CloseReceived = true;
-		});
-		await condition(() => TaskUser1SubmitReceived || TaskUser1CancelReceived || TaskUser1CloseReceived);
+	// Send updated data after openScript to the forms app.
+	await updateFormData(workflowId, {}) // TODO pass the form data from the context using associated parameter mappings.
 
-		if(TaskUser1CancelReceived || TaskUser1CloseReceived) {
-			continue;
-		}
+	let TaskUser2SubmitReceived = false;
+	setHandler(defineSignal<any>("TaskUser2Submit"), (data: any) => {
+		// TODO associated parameter mapping to context
+		TaskUser2SubmitReceived = true;
+	});
 
-		// TODO Optional: Execute activities
+	await condition(() => TaskUser2SubmitReceived);
 
-		await startForm(
-			workflowId,
-			{
-				taskId: taskId,
-				signalNameBase: 'TaskUser2', // ACTIVITY_NAME = 'TaskUser2' + SIGNAL = 'Close/Submit/Cancel/Open'
-				formUri: 'string',
-				tibcoWorkflowId: 'string',
-				data: {
-					input: 'test'
-				}
-			});
+	// TODO Optional: Execute activities
 
-		// Wait for open signal from the forms app. Execute open Script.
-		let TaskUser2OpenReceived = false;
-		setHandler(defineSignal<any>("TaskUser2Open"), (data: any) => {
-			// TODO Execute open script
-			TaskUser2OpenReceived = true;
-		});
+	// Go to example
+	ctx = await startFrom_GoToExample(ctx)
 
-		await condition(() => TaskUser2OpenReceived);
+	ctx = await EndEvent(ctx);
 
-		// Send updated data after openScript to the forms app.
-		await updateFormData(workflowId, formData)
+	// Get parent workflow handle to send signal to return workflow output.
+	const parentHandle = getExternalWorkflowHandle(workflowInfo().parent.workflowId);
+	await parentHandle.signal(defineSignal<[WorkflowOutput]>("PageFlowWorkflowSubmit"), mapContextToOutput(ctx))
 
-		let TaskUser2SubmitReceived = false;
-		setHandler(defineSignal<any>("TaskUser2Submit"), (data: any) => {
-			formData = data;
-			TaskUser2SubmitReceived = true;
-		});
-		let TaskUser2CancelReceived = false;
-		setHandler(defineSignal("TaskUser2Cancel"), () => {
-			TaskUser2CancelReceived = true;
-		});
-		let TaskUser2CloseReceived = false;
-		setHandler(defineSignal("TaskUser2Close"), () => {
-			TaskUser2CloseReceived = true;
-		});
-		await condition(() => TaskUser2SubmitReceived || TaskUser2CancelReceived || TaskUser2CloseReceived);
-
-		if(TaskUser2CancelReceived || TaskUser2CloseReceived) {
-			continue;
-		}
-
-		// TODO Optional: Execute activities
-
-		ctx = await EndEvent(ctx);
-
-		break;
-	}
-
-	// TODO data mapping? Or return result (signal or normale return) and do the mapping in the parent workflow?
-
-	// Send task done to forms app.
-	await completeTask(taskId);
-
-	// TODO Task user completed script? Or execute this script in the parent workflow?
-
+	// Return mapped context back to parent.
 	return mapContextToOutput(ctx);
+}
+
+async function startFrom_GoToExample(input: WorkflowContext): Promise<WorkflowContext> {
+	let ctx: WorkflowContext = {
+		...input
+	};
+
+	const workflowId = workflowInfo().workflowId;
+
+	// TODO Optional: Execute activities
+
+	await startForm(
+		workflowId,
+		{
+			taskId: ctx._generated.taskId,
+			signalNameBase: 'TaskUser3', // ACTIVITY_NAME = 'TaskUser3' + SIGNAL = 'Close/Submit/Cancel/Open'
+			formUri: 'string',
+			tibcoWorkflowId: 'string',
+			data: {
+				input: 'test'
+			}
+		});
+
+	// Wait for open signal from the forms app. Execute open Script.
+	let TaskUser3OpenReceived = false;
+	setHandler(defineSignal<any>("TaskUser3Open"), (data: any) => {
+		// TODO Execute open script
+		TaskUser3OpenReceived = true;
+	});
+
+	await condition(() => TaskUser3OpenReceived);
+
+	// Send updated data after openScript to the forms app.
+	await updateFormData(workflowId, {}) // TODO pass the form data from the context using associated parameter mappings.
+
+	let TaskUser3SubmitReceived = false;
+	setHandler(defineSignal<any>("TaskUser3Submit"), (data: any) => {
+		// TODO associated parameter mapping to context
+		TaskUser3SubmitReceived = true;
+	});
+
+	await condition(() => TaskUser3SubmitReceived);
+
+	return ctx;
 }
 
 function mapContextToOutput(ctx: WorkflowContext): WorkflowContext {
