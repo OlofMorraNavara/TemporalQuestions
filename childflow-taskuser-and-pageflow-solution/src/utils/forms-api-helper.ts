@@ -5,7 +5,7 @@ const BASE_URL = 'http://localhost:3000';
 export interface StartTaskPayload {
 	taskId: string;
 	workflowId: string;
-	signalName: string;
+	signalNameBase: string;
 }
 
 export async function startTask(
@@ -41,7 +41,7 @@ export async function completeTask(
 
 export interface StartFormPayload {
 	taskId: string;
-	signalName: string;
+	signalNameBase: string;
 	formUri: string;
 	tibcoWorkflowId: string;
 	data?: Record<string, unknown>;

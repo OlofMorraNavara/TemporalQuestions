@@ -36,7 +36,7 @@ export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowC
 	const taskId = 'task-TaskUser4-' + uuid4()
 	await startTask({
 		workflowId: workflowId,
-		signalName: 'taskOpenedSignal',
+		signalNameBase: 'TaskUser4', // ACTIVITY_NAME = 'TaskUser4' + SIGNAL = 'TaskOpened'
 		taskId: taskId,
 	});
 
@@ -45,7 +45,7 @@ export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowC
 	while (true){
 		// Wait for form open signal
 		let taskOpenedReceived = false;
-		setHandler(defineSignal("taskOpenedSignal"), () => {
+		setHandler(defineSignal("TaskUser4TaskOpened"), () => {
 			taskOpenedReceived = true;
 		});
 		await condition(() => taskOpenedReceived);
@@ -55,7 +55,7 @@ export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowC
 			workflowId,
 			{
 				taskId: taskId,
-				signalName: `TaskUser4Submit` , // {ACTIVITY_NAME} = TaskUser4 + 'Close/Submit/Cancel/Open'
+				signalNameBase: `TaskUser4` , // ACTIVITY_NAME = 'TaskUser4' + SIGNAL = 'Close/Submit/Cancel/Open'
 				formUri: 'string',
 				tibcoWorkflowId: 'string',
 				data: {

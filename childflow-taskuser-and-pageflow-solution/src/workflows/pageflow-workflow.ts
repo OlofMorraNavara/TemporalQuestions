@@ -35,7 +35,7 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 	const taskId = 'task-pageflow-' + uuid4()
 	await startTask({
 		workflowId: '',
-		signalName: 'taskOpenedSignal',
+		signalNameBase: 'pageFlowName', // PAGEFLOW_NAME = 'pageFlowName' + SIGNAL = 'TaskOpened'
 		taskId: taskId,
 	});
 
@@ -45,7 +45,7 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 
 		// Wait for form open signal
 		let taskOpenedReceived = false;
-		setHandler(defineSignal("taskOpenedSignal"), () => {
+		setHandler(defineSignal("pageFlowNameTaskOpened"), () => {
 			taskOpenedReceived = true;
 		});
 		await condition(() => taskOpenedReceived);
@@ -55,7 +55,7 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 			workflowId,
 			{
 				taskId: taskId,
-				signalName: 'TaskUser1Submit',
+				signalNameBase: 'TaskUser1', // ACTIVITY_NAME = 'TaskUser1' + SIGNAL = 'Close/Submit/Cancel/Open'
 				formUri: 'string',
 				tibcoWorkflowId: 'string',
 				data: {
@@ -99,7 +99,7 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 			workflowId,
 			{
 				taskId: taskId,
-				signalName: 'TaskUser2Submit',
+				signalNameBase: 'TaskUser2', // ACTIVITY_NAME = 'TaskUser2' + SIGNAL = 'Close/Submit/Cancel/Open'
 				formUri: 'string',
 				tibcoWorkflowId: 'string',
 				data: {
