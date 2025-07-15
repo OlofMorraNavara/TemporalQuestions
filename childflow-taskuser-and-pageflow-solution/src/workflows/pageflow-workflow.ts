@@ -3,6 +3,7 @@ import {
 	defineSignal,
 	setHandler,
 	condition, uuid4,
+	WorkflowInfo, workflowInfo
 } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../types/pageflow-context';
 import type * as activities from '../activities';
@@ -15,7 +16,7 @@ const {StartEvent, TaskUser1, TaskUser2, TaskUser3, EndEvent } = proxyActivities
 	},
 });
 
-const { completeTask, startForm, startTask } = proxyActivities<typeof formsApiHelpers>({
+const { completeTask, startForm, startTask, updateFormData } = proxyActivities<typeof formsApiHelpers>({
 	startToCloseTimeout: '1 minute',
 	retry: {
 		maximumAttempts: 3,
@@ -27,18 +28,18 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 		...input,
 	};
 
+	// TODO ScheduleScript
+
 	// Start task
-	const taskId = 'task-TaskUser4-' + uuid4()
+	const workflowId = workflowInfo().workflowId;
+	const taskId = 'task-pageflow-' + uuid4()
 	await startTask({
 		workflowId: '',
-		signalName: 'TaskUser4',
+		signalName: 'taskOpenedSignal',
 		taskId: taskId,
 	});
 
-	// TODO ScheduleScript
-
 	let formData: any;
-
 	while(true){
 		ctx = await StartEvent(ctx);
 
@@ -51,21 +52,32 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 
 		// Send HTTP request to the forms app to start form.
 		await startForm(
-			'ParentWorkflowID',
+			workflowId,
 			{
 				taskId: taskId,
-				childWorkflowId: 'string',
-				signalName: 'TaskUser1Done',
+				signalName: 'TaskUser1Submit',
 				formUri: 'string',
 				tibcoWorkflowId: 'string',
 				data: {
 					input: 'test'
 				}
 			});
-		let TaskUser1DoneReceived = false;
-		setHandler(defineSignal<any>("TaskUser1Done"), (data: any) => {
+
+		// Wait for open signal from the forms app. Execute open Script.
+		let TaskUser1OpenReceived = false;
+		setHandler(defineSignal<any>("TaskUser1Open"), (data: any) => {
+			// TODO Execute open script
+			TaskUser1OpenReceived = true;
+		});
+
+		await condition(() => TaskUser1OpenReceived);
+
+		// TODO Send updated data after openScript to the forms app. openForm()
+
+		let TaskUser1SubmitReceived = false;
+		setHandler(defineSignal<any>("TaskUser1Submit"), (data: any) => {
 			formData = data;
-			TaskUser1DoneReceived = true;
+			TaskUser1SubmitReceived = true;
 		});
 		let TaskUser1CancelReceived = false;
 		setHandler(defineSignal("TaskUser1Cancel"), () => {
@@ -75,7 +87,7 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 		setHandler(defineSignal("TaskUser1Close"), () => {
 			TaskUser1CloseReceived = true;
 		});
-		await condition(() => TaskUser1DoneReceived || TaskUser1CancelReceived || TaskUser1CloseReceived);
+		await condition(() => TaskUser1SubmitReceived || TaskUser1CancelReceived || TaskUser1CloseReceived);
 
 		if(TaskUser1CancelReceived || TaskUser1CloseReceived) {
 			continue;
@@ -84,21 +96,33 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 		// TODO Optional: Execute activities
 
 		await startForm(
-			'ParentWorkflowID',
+			workflowId,
 			{
 				taskId: taskId,
-				childWorkflowId: 'string',
-				signalName: 'TaskUser2Done',
+				signalName: 'TaskUser2Submit',
 				formUri: 'string',
 				tibcoWorkflowId: 'string',
 				data: {
 					input: 'test'
 				}
 			});
-		let TaskUser2DoneReceived = false;
-		setHandler(defineSignal<any>("TaskUser2Done"), (data: any) => {
+
+		// Wait for open signal from the forms app. Execute open Script.
+		let TaskUser2OpenReceived = false;
+		setHandler(defineSignal<any>("TaskUser2Open"), (data: any) => {
+			// TODO Execute open script
+			TaskUser2OpenReceived = true;
+		});
+
+		await condition(() => TaskUser2OpenReceived);
+
+		// Send updated data after openScript to the forms app.
+		await updateFormData(workflowId, formData)
+
+		let TaskUser2SubmitReceived = false;
+		setHandler(defineSignal<any>("TaskUser2Submit"), (data: any) => {
 			formData = data;
-			TaskUser2DoneReceived = true;
+			TaskUser2SubmitReceived = true;
 		});
 		let TaskUser2CancelReceived = false;
 		setHandler(defineSignal("TaskUser2Cancel"), () => {
@@ -108,7 +132,7 @@ export async function PageFlowWorkflow(input: WorkflowInput): Promise<WorkflowCo
 		setHandler(defineSignal("TaskUser2Close"), () => {
 			TaskUser2CloseReceived = true;
 		});
-		await condition(() => TaskUser2DoneReceived || TaskUser2CancelReceived || TaskUser2CloseReceived);
+		await condition(() => TaskUser2SubmitReceived || TaskUser2CancelReceived || TaskUser2CloseReceived);
 
 		if(TaskUser2CancelReceived || TaskUser2CloseReceived) {
 			continue;

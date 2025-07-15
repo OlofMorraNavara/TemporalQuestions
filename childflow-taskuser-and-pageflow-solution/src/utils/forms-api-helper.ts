@@ -41,7 +41,6 @@ export async function completeTask(
 
 export interface StartFormPayload {
 	taskId: string;
-	childWorkflowId: string;
 	signalName: string;
 	formUri: string;
 	tibcoWorkflowId: string;
@@ -93,4 +92,27 @@ export async function withdrawForm(
 export interface WithdrawFormPayload {
 	workflowId: string;
 	signalName: string;
+}
+
+
+/**
+ * Sends a PATCH request to the Forms API to update form data.
+ * To be executed after an open or closed script is executed.
+ * @param workflowId
+ * @param payload
+ */
+export async function updateFormData(
+	workflowId: string,
+	payload: any
+): Promise<void> {
+	const url = `${BASE_URL}/task/${workflowId}/form`;
+	try {
+		await axios.patch(url, payload);
+	} catch (err) {
+		if (axios.isAxiosError(err)) {
+			const error = err as AxiosError;
+			throw new Error(`Failed to update form data: ${error.response?.status} ${error.response?.statusText} - ${error.message}`);
+		}
+		throw err;
+	}
 }
