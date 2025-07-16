@@ -2,7 +2,7 @@ import {
 	proxyActivities,
 	defineSignal,
 	setHandler,
-	condition, uuid4, workflowInfo, getExternalWorkflowHandle,
+	condition, workflowInfo,
 } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../../types/taskuser4-context';
 import type * as activities from '../../activities';
@@ -23,20 +23,12 @@ const { completeTask, startForm, startTask } = proxyActivities<typeof formsApiHe
 	},
 });
 
-export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowContext> {
+export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowOutput> {
 	let ctx: WorkflowContext = {
 		...input,
 	};
 
-	// Start task
 	const workflowId = workflowInfo().workflowId;
-
-	// Wait for form open signal
-	let taskOpenedReceived = false;
-	setHandler(defineSignal("TaskUser4TaskOpened"), () => {
-		taskOpenedReceived = true;
-	});
-	await condition(() => taskOpenedReceived);
 
 	// send HTTP request to the forms app to start form.
 	await startForm(
@@ -61,40 +53,15 @@ export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowC
 
 	await condition(() => TaskUser4OpenReceived);
 
-	// TODO Send updated data after openScript to the forms app. openForm()
-
-	// Wait for forms app to send signal when form is submitted/closed/cancelled.
+	// Wait for forms app to send signal when form is submitted.
 	let TaskUser4SubmittedReceived = false;
 	setHandler(defineSignal<any>("TaskUser4Submit"), (data: any) => {
-		// TODO SubmitScript
+		// TODO SubmitScript, or execute this in parent?
 		// TODO map data to workflow context.
 		TaskUser4SubmittedReceived = true;
 	});
 
-	// TODO Should this be deleted and implemented on parent workflow level?? Send signals straight to parent workflow?
-	let TaskUser4CloseReceived = false;
-	setHandler(defineSignal<any>("TaskUser4Close"), async (data: any) => {
-		// TODO CloseScript
-		TaskUser4CloseReceived = true;
-		await updateFormData(workflowId, {data}) // TODO pass the form data from the context using associated parameter mappings.
-	});
-
-	// TODO Should this be deleted and implemented on parent workflow level?? Send signals straight to parent workflow?
-	let TaskUser4CancelReceived = false;
-	setHandler(defineSignal<any>("TaskUser4Cancel"), (data: any) => {
-		TaskUser4CancelReceived = true;
-	});
-
-	await condition(() => TaskUser4SubmittedReceived || TaskUser4CloseReceived || TaskUser4CancelReceived);
-
-	if(TaskUser4SubmittedReceived) {
-		// Get parent workflow handle to send signal to return workflow output.
-		const parentHandle = getExternalWorkflowHandle(workflowInfo().parent.workflowId);
-		await parentHandle.signal(defineSignal<[WorkflowOutput]>("TaskUser4Submit"), mapContextToOutput(ctx))
-	}
-	else{
-		// TODO What to do when task is closed?
-	}
+	await condition(() => TaskUser4SubmittedReceived);
 
 	return mapContextToOutput(ctx);
 }

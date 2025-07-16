@@ -2,8 +2,8 @@ import {
 	proxyActivities,
 	defineSignal,
 	setHandler,
-	condition, uuid4,
-	WorkflowInfo, workflowInfo, getExternalWorkflowHandle
+	condition,
+	workflowInfo,
 } from '@temporalio/workflow';
 import { WorkflowContext, WorkflowInput, WorkflowOutput } from '../types/pageflow-context';
 import type * as activities from '../activities';
@@ -23,21 +23,13 @@ const { completeTask, startForm, startTask, updateFormData } = proxyActivities<t
 	},
 });
 
-export async function PageFlowWorkflow(input: WorkflowInput | WorkflowContext): Promise<WorkflowContext> {
+export async function PageFlowWorkflow(input: WorkflowContext): Promise<WorkflowOutput> {
 	let ctx: WorkflowContext;
 	ctx = {
 		...input
 	};
 
-	// Start task
 	const workflowId = workflowInfo().workflowId;
-
-	// Wait for form open signal
-	let taskOpenedReceived = false;
-	setHandler(defineSignal("PageFlowWorkflowTaskOpened"), () => {
-		taskOpenedReceived = true;
-	});
-	await condition(() => taskOpenedReceived);
 
 	// Optional execute activity
 	ctx = await StartEvent(ctx);
@@ -64,11 +56,12 @@ export async function PageFlowWorkflow(input: WorkflowInput | WorkflowContext): 
 
 	await condition(() => TaskUser1OpenReceived);
 
-	// TODO Send updated data after openScript to the forms app. openForm()
+	await updateFormData(workflowId, {}) // TODO pass the form data from the context using associated parameter mappings.
 
 	let TaskUser1SubmitReceived = false;
 	setHandler(defineSignal<any>("TaskUser1Submit"), (data: any) => {
-		// Do associated parameter mapping to context
+		// TODO submitScript, or execute in parent?
+		// TODO associated parameter mapping to context
 		TaskUser1SubmitReceived = true;
 	});
 	await condition(() => TaskUser1SubmitReceived);
@@ -101,6 +94,7 @@ export async function PageFlowWorkflow(input: WorkflowInput | WorkflowContext): 
 
 	let TaskUser2SubmitReceived = false;
 	setHandler(defineSignal<any>("TaskUser2Submit"), (data: any) => {
+		// TODO submitScript, or execute in parent?
 		// TODO associated parameter mapping to context
 		TaskUser2SubmitReceived = true;
 	});
@@ -113,10 +107,6 @@ export async function PageFlowWorkflow(input: WorkflowInput | WorkflowContext): 
 	ctx = await startFrom_GoToExample(ctx)
 
 	ctx = await EndEvent(ctx);
-
-	// Get parent workflow handle to send signal to return workflow output.
-	const parentHandle = getExternalWorkflowHandle(workflowInfo().parent.workflowId);
-	await parentHandle.signal(defineSignal<[WorkflowOutput]>("PageFlowWorkflowSubmit"), mapContextToOutput(ctx))
 
 	// Return mapped context back to parent.
 	return mapContextToOutput(ctx);
@@ -157,6 +147,7 @@ async function startFrom_GoToExample(input: WorkflowContext): Promise<WorkflowCo
 
 	let TaskUser3SubmitReceived = false;
 	setHandler(defineSignal<any>("TaskUser3Submit"), (data: any) => {
+		// TODO submitScript, or execute in parent?
 		// TODO associated parameter mapping to context
 		TaskUser3SubmitReceived = true;
 	});

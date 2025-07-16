@@ -59,30 +59,38 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
     });
 
     while(true){
+        let TaskUser4Completed = false;
+
+        // Wait for task open signal
+        let taskOpenedReceived = false;
+        setHandler(defineSignal("TaskUser4TaskOpened"), () => {
+            taskOpenedReceived = true;
+        });
+        await condition(() => taskOpenedReceived);
+
         const cancellationScopeTaskUser4_TaskUser4 = new CancellationScope();
         cancellationScopeTaskUser4_TaskUser4.run(async () => {
-            await executeChild(TaskUser4Workflow, {
-                args: [inputTaskUser4], // TODO input could maybe also be workflow context?
+            const result = await executeChild(TaskUser4Workflow, {
+                args: [inputTaskUser4], // TODO input could maybe also be workflow context OR workflow input?
                 workflowId: "child-workflow-taskUser-" + uuid4(),
                 cancellationType: ChildWorkflowCancellationType.TRY_CANCEL,
                 parentClosePolicy: ParentClosePolicy.TERMINATE
             });
+
+            // Data mapping using the associated parameters
+            ctx.Param1 = result.taskUser4TestParam;
+
+            TaskUser4Completed = true;
         }).catch((err: any) => {
             if (!isCancellation(err)) {
                 throw err;
             }
         });
 
-        let TaskUser4SubmitReceived = false;
-        setHandler(defineSignal<[TaskUser4Definitions.WorkflowOutput]>("TaskUser4Submit"), async (data: TaskUser4Definitions.WorkflowOutput) => {
-            // Data mapping using the associated parameters
-            ctx.Param1 = data.taskUser4TestParam;
-
-            TaskUser4SubmitReceived = true;
-        });
-
         let TaskUser4CloseReceived = false;
-        setHandler(defineSignal("TaskUser4Close"), async () => {
+        setHandler(defineSignal<any>("TaskUser4Close"), async (data: any) => {
+            // TODO closeScript?
+            await updateFormData(workflowId, {data}) // TODO pass the form data from the context using associated parameter mappings.
             TaskUser4CloseReceived = true;
         });
 
@@ -92,15 +100,15 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
             TaskUser4CancelReceived = true;
         });
 
-        await condition(() => TaskUser4SubmitReceived  || TaskUser4CloseReceived || TaskUser4CancelReceived);
+        await condition(() => TaskUser4Completed || TaskUser4CloseReceived || TaskUser4CancelReceived);
 
-        if(TaskUser4CloseReceived) {
+        if(TaskUser4CloseReceived || TaskUser4CancelReceived) {
+            cancellationScopeTaskUser4_TaskUser4.cancel();
+
             // TODO What to do when task is closed?
-            //  Where does the data come from and go?
-            //  Does it come straight from the forms API or from the child workflow?
             //  Do we map the data to this workflow context?
         }
-        else{ // If task is cancelled or submit received, we can stop the loop.
+        else {   // If submit is received, we can stop the loop.
             await completeTask(ctx._generated.taskIdTaskUser4);
 
             // TODO Task user completed script?
@@ -131,30 +139,31 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
 
     // Loop for restarting flow
     while(true){
+        let PageFlowWorkflowCompleted = false;
+
+        // Wait for task open signal
+        let taskOpenedReceived = false;
+        setHandler(defineSignal("PageFlowWorkflowTaskOpened"), () => {
+            taskOpenedReceived = true;
+        });
+        await condition(() => taskOpenedReceived);
+
         const cancellationScopePageFlowWorkflow_PageFlowWorkflow = new CancellationScope();
         cancellationScopePageFlowWorkflow_PageFlowWorkflow.run(async () => {
-            await executeChild(PageFlowWorkflow, {
-                args: [inputPageFlowWorkflow],
+            const result = await executeChild(PageFlowWorkflow, {
+                args: [inputPageFlowWorkflow], // TODO input could maybe also be workflow context OR workflow input?
                 workflowId: "PageFlowWorkflow-" + uuid4(),
                 cancellationType: ChildWorkflowCancellationType.TRY_CANCEL,
                 parentClosePolicy: ParentClosePolicy.TERMINATE
             });
+
+            // Data mapping using the associated parameters
+            ctx.Param2 = result.pageFlowWorkflowTestParam;
+
         }).catch((err: any) => {
             if (!isCancellation(err)) {
                 throw err;
             }
-        });
-
-        let PageFlowWorkflowSubmitReceived = false;
-        setHandler(defineSignal<[PageFlowWorkflowDefinitions.WorkflowOutput]>("PageFlowWorkflowSubmit"), async (data: PageFlowWorkflowDefinitions.WorkflowOutput) => {
-            await completeTask(ctx._generated.taskIdPageFlowWorkflow)
-
-            // Data mapping using the associated parameters
-            ctx.Param2 = data.pageFlowWorkflowTestParam;
-
-            // TODO Page flow activity complete script?
-
-            PageFlowWorkflowSubmitReceived = true;
         });
 
         let PageFlowWorkflowCloseReceived = false;
@@ -167,12 +176,16 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
             PageFlowWorkflowCancelReceived = true;
         });
 
-        await condition(() => PageFlowWorkflowCloseReceived || PageFlowWorkflowCancelReceived || PageFlowWorkflowSubmitReceived);
+        await condition(() => PageFlowWorkflowCompleted || PageFlowWorkflowCloseReceived || PageFlowWorkflowCancelReceived);
 
         if(PageFlowWorkflowCloseReceived || PageFlowWorkflowCancelReceived) {
             cancellationScopePageFlowWorkflow_PageFlowWorkflow.cancel()
         }
         else{
+            await completeTask(ctx._generated.taskIdPageFlowWorkflow)
+
+            // TODO Page flow activity complete script?
+
             break; // Stop looping if submit received
         }
     }
