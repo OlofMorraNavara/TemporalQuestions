@@ -27,7 +27,7 @@ const { StartEvent,  EndEvent } = proxyActivities<typeof activities>({
     },
 });
 
-const { completeTask, startForm, startTask, updateFormData } = proxyActivities<typeof formsApiHelpers>({
+const { completeTask, startTask, updateFormData } = proxyActivities<typeof formsApiHelpers>({
     startToCloseTimeout: '1 minute',
     retry: {
         maximumAttempts: 3,
@@ -58,8 +58,8 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
         taskId: ctx._generated.taskIdTaskUser4,
     });
 
-    while(true){
-        let TaskUser4Completed = false;
+    let TaskUser4Completed = false;
+    while(!TaskUser4Completed){
 
         // Wait for task open signal
         let taskOpenedReceived = false;
@@ -90,7 +90,7 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
         let TaskUser4CloseReceived = false;
         setHandler(defineSignal<any>("TaskUser4Close"), async (data: any) => {
             // TODO closeScript?
-            await updateFormData(workflowId, {data}) // TODO pass the form data from the context using associated parameter mappings.
+            await updateFormData(ctx._generated.taskIdTaskUser4, {data}) // TODO pass the form data from the context using associated parameter mappings.
             TaskUser4CloseReceived = true;
         });
 
@@ -112,8 +112,6 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
             await completeTask(ctx._generated.taskIdTaskUser4);
 
             // TODO Task user completed script?
-
-            break; // Stop looping if submit received
         }
     }
 
@@ -138,9 +136,8 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
     });
 
     // Loop for restarting flow
-    while(true){
-        let PageFlowWorkflowCompleted = false;
-
+    let PageFlowWorkflowCompleted = false;
+    while(!PageFlowWorkflowCompleted){
         // Wait for task open signal
         let taskOpenedReceived = false;
         setHandler(defineSignal("PageFlowWorkflowTaskOpened"), () => {
@@ -160,6 +157,7 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
             // Data mapping using the associated parameters
             ctx.Param2 = result.pageFlowWorkflowTestParam;
 
+            PageFlowWorkflowCompleted = true;
         }).catch((err: any) => {
             if (!isCancellation(err)) {
                 throw err;
@@ -185,8 +183,6 @@ export async function MainflowTaskUserAndPageFlow(input: WorkflowInput): Promise
             await completeTask(ctx._generated.taskIdPageFlowWorkflow)
 
             // TODO Page flow activity complete script?
-
-            break; // Stop looping if submit received
         }
     }
 

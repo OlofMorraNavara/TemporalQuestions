@@ -8,6 +8,10 @@ export interface StartTaskPayload {
 	signalNameBase: string;
 }
 
+/**
+ * Sends a POST request to the Forms API to start a task.
+ * @param payload
+ */
 export async function startTask(
 	payload: StartTaskPayload
 ): Promise<void> {
@@ -24,6 +28,11 @@ export async function startTask(
 	}
 }
 
+
+/**
+ * Sends a DELETE request to the Forms API to complete a task.
+ * @param taskId
+ */
 export async function completeTask(
 	taskId: string
 ): Promise<void> {
@@ -40,8 +49,8 @@ export async function completeTask(
 }
 
 export interface StartFormPayload {
-	taskId: string;
-	signalNameBase: string;
+	childWorkflowId: string;
+	childSignalNameBase: string;
 	formUri: string;
 	tibcoWorkflowId: string;
 	data?: Record<string, unknown>;
@@ -49,14 +58,14 @@ export interface StartFormPayload {
 
 /**
  * Sends a POST request to the Forms API to start a form.
- * @param workflowId - The ID of the workflow to which the form belongs.
+ * @param taskId - The ID of the task to which the form is associated.
  * @param payload - Payload including task ID, child workflow ID, signal name, form URI, and data.
  */
 export async function startForm(
-	workflowId: string,
+	taskId: string,
 	payload: StartFormPayload
 ): Promise<void> {
-	const url = `${BASE_URL}/task/${workflowId}/form`;
+	const url = `${BASE_URL}/task/${taskId}/form`;
 	try {
 		await axios.post(url, payload);
 	} catch (err) {
@@ -98,14 +107,14 @@ export interface WithdrawFormPayload {
 /**
  * Sends a PATCH request to the Forms API to update form data.
  * To be executed after an open or closed script is executed.
- * @param workflowId
+ * @param taskId
  * @param payload
  */
 export async function updateFormData(
-	workflowId: string,
+	taskId: string,
 	payload: any
 ): Promise<void> {
-	const url = `${BASE_URL}/task/${workflowId}/form`;
+	const url = `${BASE_URL}/task/${taskId}/form`;
 	try {
 		await axios.patch(url, payload);
 	} catch (err) {

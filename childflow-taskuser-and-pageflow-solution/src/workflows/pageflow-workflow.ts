@@ -16,7 +16,7 @@ const {StartEvent, TaskUser1, TaskUser2, TaskUser3, EndEvent } = proxyActivities
 	},
 });
 
-const { completeTask, startForm, startTask, updateFormData } = proxyActivities<typeof formsApiHelpers>({
+const { startForm, updateFormData } = proxyActivities<typeof formsApiHelpers>({
 	startToCloseTimeout: '1 minute',
 	retry: {
 		maximumAttempts: 3,
@@ -36,10 +36,10 @@ export async function PageFlowWorkflow(input: WorkflowContext): Promise<Workflow
 
 	// Send HTTP request to the forms app to start form.
 	await startForm(
-		workflowId,
+		ctx._generated.taskId,
 		{
-			taskId: ctx._generated.taskId,
-			signalNameBase: 'TaskUser1', // ACTIVITY_NAME = 'TaskUser1' + SIGNAL = 'Close/Submit/Cancel/Open'
+			childWorkflowId: workflowId,
+			childSignalNameBase: 'TaskUser1', // ACTIVITY_NAME = 'TaskUser1' + SIGNAL = 'Close/Submit/Cancel/Open'
 			formUri: 'string',
 			tibcoWorkflowId: 'string',
 			data: {
@@ -56,7 +56,7 @@ export async function PageFlowWorkflow(input: WorkflowContext): Promise<Workflow
 
 	await condition(() => TaskUser1OpenReceived);
 
-	await updateFormData(workflowId, {}) // TODO pass the form data from the context using associated parameter mappings.
+	await updateFormData(ctx._generated.taskId, {}) // TODO pass the form data from the context using associated parameter mappings.
 
 	let TaskUser1SubmitReceived = false;
 	setHandler(defineSignal<any>("TaskUser1Submit"), (data: any) => {
@@ -69,10 +69,10 @@ export async function PageFlowWorkflow(input: WorkflowContext): Promise<Workflow
 	// TODO Optional: Execute activities
 
 	await startForm(
-		workflowId,
+		ctx._generated.taskId,
 		{
-			taskId: ctx._generated.taskId,
-			signalNameBase: 'TaskUser2', // ACTIVITY_NAME = 'TaskUser2' + SIGNAL = 'Close/Submit/Cancel/Open'
+			childWorkflowId: workflowId,
+			childSignalNameBase: 'TaskUser2', // ACTIVITY_NAME = 'TaskUser2' + SIGNAL = 'Close/Submit/Cancel/Open'
 			formUri: 'string',
 			tibcoWorkflowId: 'string',
 			data: {
@@ -90,7 +90,7 @@ export async function PageFlowWorkflow(input: WorkflowContext): Promise<Workflow
 	await condition(() => TaskUser2OpenReceived);
 
 	// Send updated data after openScript to the forms app.
-	await updateFormData(workflowId, {}) // TODO pass the form data from the context using associated parameter mappings.
+	await updateFormData(ctx._generated.taskId, {}) // TODO pass the form data from the context using associated parameter mappings.
 
 	let TaskUser2SubmitReceived = false;
 	setHandler(defineSignal<any>("TaskUser2Submit"), (data: any) => {
@@ -122,10 +122,10 @@ async function startFrom_GoToExample(input: WorkflowContext): Promise<WorkflowCo
 	// TODO Optional: Execute activities
 
 	await startForm(
-		workflowId,
+		ctx._generated.taskId,
 		{
-			taskId: ctx._generated.taskId,
-			signalNameBase: 'TaskUser3', // ACTIVITY_NAME = 'TaskUser3' + SIGNAL = 'Close/Submit/Cancel/Open'
+			childWorkflowId: workflowId,
+			childSignalNameBase: 'TaskUser3', // ACTIVITY_NAME = 'TaskUser3' + SIGNAL = 'Close/Submit/Cancel/Open'
 			formUri: 'string',
 			tibcoWorkflowId: 'string',
 			data: {
@@ -143,7 +143,7 @@ async function startFrom_GoToExample(input: WorkflowContext): Promise<WorkflowCo
 	await condition(() => TaskUser3OpenReceived);
 
 	// Send updated data after openScript to the forms app.
-	await updateFormData(workflowId, {}) // TODO pass the form data from the context using associated parameter mappings.
+	await updateFormData(ctx._generated.taskId, {}) // TODO pass the form data from the context using associated parameter mappings.
 
 	let TaskUser3SubmitReceived = false;
 	setHandler(defineSignal<any>("TaskUser3Submit"), (data: any) => {

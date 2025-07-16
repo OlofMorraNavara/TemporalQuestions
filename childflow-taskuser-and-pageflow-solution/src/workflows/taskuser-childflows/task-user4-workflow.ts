@@ -32,10 +32,10 @@ export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowO
 
 	// send HTTP request to the forms app to start form.
 	await startForm(
-		workflowId,
+		ctx._generated.taskIdTaskUser4,
 		{
-			taskId: ctx._generated.taskIdTaskUser4,
-			signalNameBase: `TaskUser4` , // ACTIVITY_NAME = 'TaskUser4' + SIGNAL = 'Close/Submit/Cancel/Open'
+			childWorkflowId: workflowId,
+			childSignalNameBase: `TaskUser4` , // ACTIVITY_NAME = 'TaskUser4' + SIGNAL = 'Close/Submit/Cancel/Open'
 			formUri: 'string',
 			tibcoWorkflowId: 'string',
 			data: {
@@ -47,7 +47,7 @@ export async function TaskUser4Workflow(input: WorkflowInput): Promise<WorkflowO
 	let TaskUser4OpenReceived = false;
 	setHandler(defineSignal<any>("TaskUser4Open"), async (data: any) => {
 		// TODO Execute open script
-		await updateFormData(workflowId, {data}) // TODO pass the form data from the context using associated parameter mappings.
+		await updateFormData(ctx._generated.taskId, {data}) // TODO pass the form data from the context using associated parameter mappings.
 		TaskUser4OpenReceived = true;
 	});
 
