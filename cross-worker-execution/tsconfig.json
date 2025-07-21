@@ -1,0 +1,44 @@
+{
+    "extends": "@tsconfig/node18/tsconfig.json",
+    "version": "5.6.3",
+    "compilerOptions": {
+        "module": "CommonJS",
+        "moduleResolution": "node",
+        "baseUrl": ".",
+        "lib": ["es2022"],
+        "target": "ES2022",
+        "declaration": false,
+        "declarationMap": false,
+        "sourceMap": true,
+        "skipDefaultLibCheck": true,
+        "skipLibCheck": true,
+        "emitDecoratorMetadata": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "importHelpers": true,
+        "isolatedModules": true,
+        "rootDir": "./",
+        "outDir": "./build",
+        "paths": {
+            "@/libs/*": ["libs/*"],
+            "@/wsdl/*": ["wsdl/*"],
+            "@/types/*": ["./types/*"],
+            "@/src/*": ["./src/*"],
+            "@/tests/*": ["./tests/*"],
+            "@/database/*": ["./src/database/*"],
+            "@integration/bpm-es": ["libs/entity-services/bpm/src/index.ts"],
+            "@integration/temporal": ["libs/temporal/src/index.ts"],
+            "@integration/temporal/temporal-testing": ["libs/temporal/src/testing.ts"],
+            "@integration/temporal/tooling": ["libs/temporal/src/tooling/index.ts"],
+            "@integration/aws-managers-secret": ["libs/aws/managers/secret/src/index.ts"],
+            "@integration/soap-models": ["libs/soap/soap-models/src/index.ts"],
+            "@integration/tibco-converted-commons/*": ["libs/tibco-converted-commons/*"],
+            "@integration/event-driven-helpers": ["libs/event-driven-helpers/src/index.ts"],
+            "@integration/order-fulfillment-value-objects": ["libs/order-fulfillment-value-objects/index.ts"]
+        }
+    },
+    "include": ["src/**/*.ts", "tests/**/*.ts"],
+    "ts-node": {
+        "require": ["tsconfig-paths/register"]
+    }
+}
